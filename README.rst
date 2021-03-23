@@ -20,9 +20,11 @@
 .. image:: https://img.shields.io/github/license/tu-graz-library/repository-cli.svg
         :target: https://github.com/tu-graz-library/repository-cli/blob/master/LICENSE
 
-CLI utilities for invenioRDM
+.. image:: https://readthedocs.org/projects/repository-cli/badge/?version=latest
+        :target: https://repository-cli.readthedocs.io/en/latest/?badge=latest
 
-TODO: Please provide feature overview of module
+
+CLI utilities for TU Graz Repository
 
 Further documentation is available on
 https://repository-cli.readthedocs.io/
