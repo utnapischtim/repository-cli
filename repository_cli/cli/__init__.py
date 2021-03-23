@@ -9,4 +9,4 @@
 
 from .cli import utilities
 
-__all__ = (utilities,)
+__all__ = ("utilities",)

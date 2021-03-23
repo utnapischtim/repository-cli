@@ -9,6 +9,7 @@
 
 import click
 
+from .records import records
 from .users import users
 
 
@@ -19,3 +20,4 @@ def utilities():
 
 
 utilities.add_command(users)
+utilities.add_command(records)

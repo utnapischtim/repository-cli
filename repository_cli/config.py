@@ -10,8 +10,8 @@
 # TODO: This is an example file. Remove it if your package does not use any
 # extra configuration variables.
 
-REPOSITORY_CLI_DEFAULT_VALUE = 'foobar'
+REPOSITORY_CLI_DEFAULT_VALUE = "foobar"
 """Default value for the application."""
 
-REPOSITORY_CLI_BASE_TEMPLATE = 'repository_cli/base.html'
+REPOSITORY_CLI_BASE_TEMPLATE = "repository_cli/base.html"
 """Default base template for the demo page."""

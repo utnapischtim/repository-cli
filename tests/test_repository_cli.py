@@ -15,17 +15,18 @@ from repository_cli import RepositoryCli
 def test_version():
     """Test version import."""
     from repository_cli import __version__
+
     assert __version__
 
 
 def test_init():
     """Test extension initialization."""
-    app = Flask('testapp')
+    app = Flask("testapp")
     ext = RepositoryCli(app)
-    assert 'repository-cli' in app.extensions
+    assert "repository-cli" in app.extensions
 
-    app = Flask('testapp')
+    app = Flask("testapp")
     ext = RepositoryCli()
-    assert 'repository-cli' not in app.extensions
+    assert "repository-cli" not in app.extensions
     ext.init_app(app)
-    assert 'repository-cli' in app.extensions
+    assert "repository-cli" in app.extensions
