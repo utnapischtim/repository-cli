@@ -41,6 +41,9 @@ def get_draft(pid, identity):
     None will be returned if there is no draft.
     """
     service = get_records_service()
+    # check if record exists
+    service.read(id_=pid, identity=identity)
+    draft = None
     try:
         draft = service.read_draft(id_=pid, identity=identity)
     except Exception:
