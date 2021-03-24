@@ -33,7 +33,7 @@ def list_records(output_file):
     """List record's.
 
     example call:
-        invenio repository records list [-of out.json]
+        invenio repository records list [--of out.json]
     """
     records = RDMRecordMetadata.query.filter_by(is_deleted=False)
     if output_file:
@@ -55,9 +55,13 @@ def list_records(output_file):
     if output_file:
         output_file.write("]")
 
-    click.secho(
-        f"wrote {num_records} records to {output_file.name}", fg="green"
-    )
+        click.secho(
+            f"wrote {num_records} records to {output_file.name}", fg="green"
+        )
+    else:
+        click.secho(
+            f"{num_records} records", fg="green"
+        )
 
 
 @records.command("update")
@@ -67,7 +71,7 @@ def update_records(input_file):
     """Update records specified in input file.
 
     example call:
-        invenio repository records update -in in.json
+        invenio repository records update --if in.json
     """
     records = json.load(input_file)
     identity = get_identity(
@@ -95,8 +99,9 @@ def delete_record(pid):
         permission_name="system_process", role_name="admin"
     )
     service = get_records_service()
+    # TODO: add 'pid' exist check
     service.delete(id_=pid, identity=identity)
-    click.secho(f"{pid}", fg="green")
+    click.secho(f"'{pid}', soft-deleted", fg="green")
 
 
 @records.group()
