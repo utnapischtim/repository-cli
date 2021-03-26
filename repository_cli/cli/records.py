@@ -117,10 +117,11 @@ def list_identifiers(pid):
     """List record's identifiers.
 
     example call:
-        invenio repository records identifiers list
+        invenio repository records identifiers list -p <pid>
     """
     identity = get_identity()
     service = get_records_service()
+    # TODO: add 'pid' exist check
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_identifiers = record_data["metadata"].get("identifiers", [])
 
@@ -176,7 +177,7 @@ def replace_identifier(identifier, pid):
     """Update the specified record's identifiers.
 
     example call:
-        invenio repository records identifiers add -p "fcze8-4vx33"
+        invenio repository records identifiers replace -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
     identifier = json.loads(identifier)
