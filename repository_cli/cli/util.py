@@ -76,3 +76,15 @@ def update_record(pid, identity, should_publish, new_data, old_data):
         else:
             service.update_draft(id_=pid, identity=identity, data=old_data)
         raise e
+
+
+def record_exists(pid):
+    """Check if record exists and is not deleted."""
+    service = get_records_service()
+    identity = get_identity()
+    try:
+        service.read(id_=pid, identity=identity)
+    except Exception:
+        return False
+
+    return True

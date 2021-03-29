@@ -17,7 +17,7 @@ from invenio_records import Record
 
 from .click_options import (option_identifier, option_input_file,
                             option_output_file, option_pid)
-from .util import get_draft, get_identity, get_records_service
+from .util import get_draft, get_identity, get_records_service, record_exists
 
 
 @click.group()
@@ -59,9 +59,7 @@ def list_records(output_file):
             f"wrote {num_records} records to {output_file.name}", fg="green"
         )
     else:
-        click.secho(
-            f"{num_records} records", fg="green"
-        )
+        click.secho(f"{num_records} records", fg="green")
 
 
 @records.command("update")
@@ -82,6 +80,9 @@ def update_records(input_file):
     for record in records:
         pid = record["id"]
         click.secho(f"'{pid}', trying to update", fg="yellow")
+        if not record_exists(pid):
+            click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+            continue
         service.update(id_=pid, identity=identity, data=record)
         click.secho(f"'{pid}', successfully updated", fg="green")
 
@@ -95,11 +96,14 @@ def delete_record(pid):
     example call:
         invenio repository records delete -p "fcze8-4vx33"
     """
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        return
+
     identity = get_identity(
         permission_name="system_process", role_name="admin"
     )
     service = get_records_service()
-    # TODO: add 'pid' exist check
     service.delete(id_=pid, identity=identity)
     click.secho(f"'{pid}', soft-deleted", fg="green")
 
@@ -119,9 +123,12 @@ def list_identifiers(pid):
     example call:
         invenio repository records identifiers list -p <pid>
     """
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        return
+
     identity = get_identity()
     service = get_records_service()
-    # TODO: add 'pid' exist check
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_identifiers = record_data["metadata"].get("identifiers", [])
 
@@ -149,6 +156,10 @@ def add_identifier(identifier, pid):
     identifier = json.loads(identifier)
     if type(identifier) is not dict:
         click.secho(f"identifier should be of type dictionary", fg="red")
+        return
+
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity("system_process", role_name="admin")
@@ -183,6 +194,10 @@ def replace_identifier(identifier, pid):
     identifier = json.loads(identifier)
     if type(identifier) is not dict:
         click.secho(f"identifier should be of type dictionary", fg="red")
+        return
+
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity("system_process", role_name="admin")
