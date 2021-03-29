@@ -11,7 +11,7 @@ import click
 
 
 # -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
-def option_identifier(required=False):
+def option_identifier(required: bool = False):
     """Get parameter options for metadata identifier."""
     return click.option(
         "--identifier",
@@ -22,7 +22,7 @@ def option_identifier(required=False):
 
 
 # -p "fcze8-4vx33"
-def option_pid(required=False):
+def option_pid(required: bool = False):
     """Get parameter options for record PID."""
     return click.option(
         "--pid",
@@ -34,7 +34,7 @@ def option_pid(required=False):
 
 
 # --if "input.json"
-def option_input_file(required=False):
+def option_input_file(required: bool = False):
     """Get parameter options for input file."""
     return click.option(
         "--input-file",
@@ -48,7 +48,7 @@ def option_input_file(required=False):
 
 
 # --of "output.json"
-def option_output_file(required=False):
+def option_output_file(required: bool = False):
     """Get parameter options for output file."""
     return click.option(
         "--output-file",

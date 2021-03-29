@@ -11,10 +11,12 @@ from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
 from invenio_admin.permissions import action_admin_access
+from invenio_drafts_resources.records.api import Draft
 from invenio_rdm_records.proxies import current_rdm_records
+from invenio_rdm_records.services import RDMRecordService
 
 
-def get_identity(permission_name="any_user", role_name=None):
+def get_identity(permission_name: str = "any_user", role_name: str = None):
     """Get an identity to perform tasks.
 
     Default is "any_user"
@@ -35,7 +37,7 @@ def get_identity(permission_name="any_user", role_name=None):
     return identity
 
 
-def get_draft(pid, identity):
+def get_draft(pid: str, identity: Identity) -> Draft:
     """Get current draft of record.
 
     None will be returned if there is no draft.
@@ -52,12 +54,14 @@ def get_draft(pid, identity):
     return draft
 
 
-def get_records_service():
+def get_records_service() -> RDMRecordService:
     """Get records service."""
     return current_rdm_records.records_service
 
 
-def update_record(pid, identity, should_publish, new_data, old_data):
+def update_record(
+    pid: str, identity: Identity, should_publish: bool, new_data, old_data
+):
     """Update record with new data.
 
     If it was published before, it should be published again.
@@ -78,7 +82,7 @@ def update_record(pid, identity, should_publish, new_data, old_data):
         raise e
 
 
-def record_exists(pid):
+def record_exists(pid: str) -> bool:
     """Check if record exists and is not deleted."""
     service = get_records_service()
     identity = get_identity()

@@ -8,6 +8,7 @@
 """Management commands for records."""
 
 import json
+from typing import TextIO
 
 import click
 from flask.cli import with_appcontext
@@ -29,7 +30,7 @@ def records():
 @records.command("list")
 @option_output_file()
 @with_appcontext
-def list_records(output_file):
+def list_records(output_file: TextIO):
     """List record's.
 
     example call:
@@ -65,7 +66,7 @@ def list_records(output_file):
 @records.command("update")
 @option_input_file(required=True)
 @with_appcontext
-def update_records(input_file):
+def update_records(input_file: TextIO):
     """Update records specified in input file.
 
     example call:
@@ -90,7 +91,7 @@ def update_records(input_file):
 @records.command("delete")
 @option_pid(required=True)
 @with_appcontext
-def delete_record(pid):
+def delete_record(pid: str):
     """Delete record.
 
     example call:
@@ -117,7 +118,7 @@ def identifiers():
 @identifiers.command("list")
 @option_pid(required=option_pid)
 @with_appcontext
-def list_identifiers(pid):
+def list_identifiers(pid: str):
     """List record's identifiers.
 
     example call:
@@ -146,7 +147,7 @@ def list_identifiers(pid):
 @option_identifier(required=True)
 @option_pid(required=True)
 @with_appcontext
-def add_identifier(identifier, pid):
+def add_identifier(identifier: map, pid: str):
     """Update the specified record's identifiers.
 
     example call:
@@ -184,7 +185,7 @@ def add_identifier(identifier, pid):
 @option_identifier(required=True)
 @option_pid(required=True)
 @with_appcontext
-def replace_identifier(identifier, pid):
+def replace_identifier(identifier: map, pid: str):
     """Update the specified record's identifiers.
 
     example call:
