@@ -24,7 +24,9 @@ invenio_search_version = ">=1.4.0,<2.0.0"
 invenio_db_version = ">=1.0.5,<2.0.0"
 
 extras_require = {
-    "elasticsearch7": [f"invenio-search[elasticsearch7]{invenio_search_version}"],
+    "elasticsearch7": [
+        f"invenio-search[elasticsearch7]{invenio_search_version}"
+    ],
     "mysql": [f"invenio-db[mysql,versioning]{invenio_db_version}"],
     "postgresql": [f"invenio-db[postgresql,versioning]{invenio_db_version}"],
     "sqlite": [f"invenio-db[versioning]{invenio_db_version}"],
@@ -58,7 +60,7 @@ install_requires = [
     "click>=7.1.1,<8.0",
     "invenio-access>=1.4.2",
     "invenio-accounts>=1.4.0",
-    "invenio_rdm_records>=0.26.6",
+    "invenio_rdm_records>=0.28.0,<0.29.0",
 ]
 
 packages = find_packages()
@@ -75,7 +77,7 @@ setup(
     version=version,
     description=__doc__,
     long_description=readme + "\n\n" + history,
-    keywords="invenio TODO",
+    keywords="invenio repository cli",
     license="MIT",
     author="Graz University of Technology",
     author_email="info@tugraz.at",

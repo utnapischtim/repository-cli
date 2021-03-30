@@ -58,7 +58,10 @@ author = u"Graz University of Technology"
 # Get the version string. Cannot be done with import!
 g = {}
 with open(
-    os.path.join(os.path.dirname(__file__), "..", "repository_cli", "version.py"), "rt"
+    os.path.join(
+        os.path.dirname(__file__), "..", "repository_cli", "version.py"
+    ),
+    "rt",
 ) as fp:
     exec(fp.read(), g)
     version = g["__version__"]
@@ -282,7 +285,13 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, "repository-cli", u"repository-cli Documentation", [author], 1)
+    (
+        master_doc,
+        "repository-cli",
+        u"repository-cli Documentation",
+        [author],
+        1,
+    )
 ]
 
 # If true, show URL addresses after external links.
@@ -328,3 +337,12 @@ intersphinx_mapping = {
 
 # Autodoc configuraton.
 autoclass_content = "both"
+
+
+# Ignore pydoc errors for not found types
+# see https://www.sphinx-doc.org/en/master/usage/configuration.html?highlight=nitpick#confval-nitpick_ignore
+nitpick_ignore = [
+    ("py:class", "flask_principal.Identity"),
+    ("py:class", "invenio_drafts_resources.records.api.Draft"),
+    ("py:class", "invenio_rdm_records.services.services.RDMRecordService"),
+]

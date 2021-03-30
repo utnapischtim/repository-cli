@@ -19,7 +19,7 @@ from invenio_rdm_records.services import RDMRecordService
 def get_identity(permission_name: str = "any_user", role_name: str = None):
     """Get an identity to perform tasks.
 
-    Default is "any_user"
+    Default permission is "any_user"
     """
     identity = Identity(0)
     permission = any_user

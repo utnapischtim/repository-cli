@@ -7,6 +7,3 @@
 
 Configuration
 =============
-
-.. automodule:: repository_cli.config
-   :members:
