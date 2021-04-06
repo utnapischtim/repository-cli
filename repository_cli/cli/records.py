@@ -18,7 +18,8 @@ from invenio_records import Record
 
 from .click_options import (option_identifier, option_input_file,
                             option_output_file, option_pid)
-from .util import get_draft, get_identity, get_records_service, record_exists
+from .util import (get_draft, get_identity, get_records_service, record_exists,
+                   update_record)
 
 
 @click.group()
@@ -80,11 +81,20 @@ def update_records(input_file: TextIO):
 
     for record in records:
         pid = record["id"]
-        click.secho(f"'{pid}', trying to update", fg="yellow")
+        click.secho(f"\n'{pid}', trying to update", fg="yellow")
         if not record_exists(pid):
             click.secho(f"'{pid}', does not exist or is deleted", fg="red")
             continue
-        service.update(id_=pid, identity=identity, data=record)
+
+        old_data = service.read(id_=pid, identity=identity).data.copy()
+        try:
+            update_record(
+                pid=pid, identity=identity, new_data=record, old_data=old_data
+            )
+        except Exception as e:
+            click.secho(f"'{pid}', problem during update, {e}", fg="red")
+            continue
+
         click.secho(f"'{pid}', successfully updated", fg="green")
 
 
@@ -174,9 +184,18 @@ def add_identifier(identifier: map, pid: str):
         click.secho(f"scheme '{scheme}' already in identifiers", fg="red")
         return
 
+    old_data = record_data.copy()
     current_identifiers.append(identifier)
     record_data["metadata"]["identifiers"] = current_identifiers
-    service.update(id_=pid, identity=identity, data=record_data)
+
+    try:
+        update_record(
+            pid=pid, identity=identity, new_data=record_data, old_data=old_data
+        )
+    except Exception as e:
+        click.secho(f"'{pid}', problem during update, {e}", fg="red")
+        return
+
     click.secho(pid, fg="green")
     return
 
@@ -217,6 +236,15 @@ def replace_identifier(identifier: map, pid: str):
         click.secho(f"scheme '{scheme}' not in identifiers", fg="red")
         return
 
+    old_data = record_data.copy()
     record_data["metadata"]["identifiers"] = current_identifiers
-    service.update(id_=pid, identity=identity, data=record_data)
+
+    try:
+        update_record(
+            pid=pid, identity=identity, new_data=record_data, old_data=old_data
+        )
+    except Exception as e:
+        click.secho(f"'{pid}', problem during update, {e}", fg="red")
+        return
+
     click.secho(pid, fg="green")

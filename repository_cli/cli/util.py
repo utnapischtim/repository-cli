@@ -59,26 +59,21 @@ def get_records_service() -> RDMRecordService:
     return current_rdm_records.records_service
 
 
-def update_record(
-    pid: str, identity: Identity, should_publish: bool, new_data, old_data
-):
+def update_record(pid: str, identity: Identity, new_data, old_data):
     """Update record with new data.
 
-    If it was published before, it should be published again.
-    If it had a draft, it should not be published.
-    If an error occurs, revert record to previous state.
-
+    If there is an error during publishing, the record will be set back
+    WARNING: If there is an unpublished draft, the data of it will be lost.
     """
     service = get_records_service()
+    if not get_draft(pid, identity):
+        service.edit(id_=pid, identity=identity)
+
     try:
         service.update_draft(id_=pid, identity=identity, data=new_data)
-        if should_publish:
-            service.publish(id_=pid, identity=identity)
+        service.publish(id_=pid, identity=identity)
     except Exception as e:
-        if should_publish:
-            service.delete_draft(id_=pid, identity=identity)
-        else:
-            service.update_draft(id_=pid, identity=identity, data=old_data)
+        service.update_draft(id_=pid, identity=identity, data=old_data)
         raise e
 
 
