@@ -193,10 +193,10 @@ def add_identifier(identifier: map, pid: str):
             pid=pid, identity=identity, new_data=record_data, old_data=old_data
         )
     except Exception as e:
-        click.secho(f"'{pid}', problem during update, {e}", fg="red")
+        click.secho(f"'{pid}', Error during update, {e}", fg="red")
         return
 
-    click.secho(pid, fg="green")
+    click.secho(f"Identifier for '{pid}'' added.", fg="green")
     return
 
 
