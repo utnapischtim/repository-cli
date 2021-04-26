@@ -28,6 +28,19 @@ def records():
     pass
 
 
+@records.command("count")
+@with_appcontext
+def count_records():
+    """Count number of record's.
+
+    example call:
+        invenio repository records count
+    """
+    records = RDMRecordMetadata.query.filter_by(is_deleted=False)
+    num_records = records.count()
+    click.secho(f"{num_records} records", fg="green")
+
+
 @records.command("list")
 @option_output_file()
 @with_appcontext
