@@ -5,7 +5,7 @@
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""CLI utilities for invenioRDM."""
+"""CLI utilities for TU Graz Repository."""
 
 # TODO: This is an example file. Remove it if your package does not use any
 # extra configuration variables.

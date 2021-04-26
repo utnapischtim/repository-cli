@@ -5,7 +5,7 @@
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""CLI utilities for invenioRDM."""
+"""CLI utilities for TU Graz Repository."""
 
 from . import config
 

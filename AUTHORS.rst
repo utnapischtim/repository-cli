@@ -7,6 +7,6 @@
 Authors
 =======
 
-CLI utilities for invenioRDM
+CLI utilities for TU Graz Repository
 
 - Graz University of Technology <info@tugraz.at>

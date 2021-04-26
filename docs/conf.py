@@ -118,8 +118,8 @@ todo_include_todos = False
 html_theme = "alabaster"
 
 html_theme_options = {
-    "description": "CLI utilities for invenioRDM",
-    "github_user": "inveniosoftware",
+    "description": "CLI utilities for TU Graz Repository",
+    "github_user": "tu-graz-library",
     "github_repo": "repository-cli",
     "github_button": False,
     "github_banner": True,
@@ -310,7 +310,7 @@ texinfo_documents = [
         u"repository-cli Documentation",
         author,
         "repository-cli",
-        "CLI utilities for invenioRDM",
+        "CLI utilities for TU Graz Repository",
         "Miscellaneous",
     ),
 ]
