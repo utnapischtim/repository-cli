@@ -14,29 +14,18 @@ API Docs
 CLI Commands
 ------------
 
-Records
-~~~~~~~
+.. click:: repository_cli.cli.records:records
+   :prog: invenio repository records
+   :nested: full
+   :commands: count, list
 
-.. automodule:: repository_cli.cli.records
-    :members:
-
-.. autofunction:: repository_cli.cli.records.list_records
-.. autofunction:: repository_cli.cli.records.update_records
-.. autofunction:: repository_cli.cli.records.delete_record
-
-Identifiers
-~~~~~~~~~~~
-
-.. automodule:: repository_cli.cli.records.identifiers
-    :members:
-
-.. autofunction:: repository_cli.cli.records.list_identifiers
-.. autofunction:: repository_cli.cli.records.add_identifier
-.. autofunction:: repository_cli.cli.records.replace_identifier
+.. click:: repository_cli.cli.records:identifiers
+   :prog: invenio repository records identifiers
+   :nested: full
 
 
 Utility functions
 ------------------
 
 .. automodule:: repository_cli.cli.util
-    :members:
+   :members:

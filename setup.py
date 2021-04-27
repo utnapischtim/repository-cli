@@ -32,6 +32,7 @@ extras_require = {
     "sqlite": [f"invenio-db[versioning]{invenio_db_version}"],
     "docs": [
         "Sphinx>=3",
+        "sphinx-click>=2.5.0"
     ],
     "tests": tests_require,
 }
@@ -57,6 +58,11 @@ install_requires = [
     "invenio-access>=1.4.2",
     "invenio-accounts>=1.4.0",
     "invenio_rdm_records>=0.28.0,<0.29.0",
+    "elasticsearch>=7.0.0,<8.0.0",
+    "elasticsearch_dsl>=7.2.1",
+    "SQLAlchemy-Continuum>=1.3.11",
+    "invenio_search>=1.4.0,<2.0.0",
+    "psycopg2-binary>=2.8.6",
 ]
 
 packages = find_packages()
