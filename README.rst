@@ -18,7 +18,7 @@
         :target: https://pypi.python.org/pypi/repository-cli
 
 .. image:: https://img.shields.io/github/license/tu-graz-library/repository-cli.svg
-        :target: https://github.com/tu-graz-library/repository-cli/blob/master/LICENSE
+        :target: https://github.com/tu-graz-library/repository-cli/blob/main/LICENSE
 
 .. image:: https://readthedocs.org/projects/repository-cli/badge/?version=latest
         :target: https://repository-cli.readthedocs.io/en/latest/?badge=latest

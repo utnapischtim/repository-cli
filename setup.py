@@ -52,10 +52,6 @@ setup_requires = [
     "Babel>=2.8",
 ]
 
-# Should follow inveniosoftware/invenio versions
-invenio_db_version = ">=1.0.4,<2.0.0"
-invenio_search_version = ">=1.4.0,<2.0.0"
-
 install_requires = [
     "click>=7.1.1,<8.0",
     "invenio-access>=1.4.2",

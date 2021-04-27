@@ -15,7 +15,7 @@ from .users import users
 
 @click.group()
 def utilities():
-    """Utility commands for InvenioRDM."""
+    """Utility commands for TU Graz Repository."""
     pass
 
 

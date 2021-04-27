@@ -21,7 +21,11 @@ def users():
 @users.command("list")
 @with_appcontext
 def list_users():
-    """List registered users."""
+    """List registered users.
+
+    example call:
+        invenio repository users list
+    """
     users = User.query
 
     for user in users:
