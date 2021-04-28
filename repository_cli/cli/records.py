@@ -23,32 +23,32 @@ from .util import (get_draft, get_identity, get_records_service, record_exists,
 
 
 @click.group()
-def records():
+def rdmrecords():
     """Management commands for records."""
     pass
 
 
-@records.command("count")
+@rdmrecords.command("count")
 @with_appcontext
 def count_records():
     """Count number of record's.
 
     example call:
-        invenio repository records count
+        invenio repository rdmrecords count
     """
     records = RDMRecordMetadata.query.filter_by(is_deleted=False)
     num_records = records.count()
     click.secho(f"{num_records} records", fg="green")
 
 
-@records.command("list")
+@rdmrecords.command("list")
 @option_output_file()
 @with_appcontext
 def list_records(output_file: TextIO):
     """List record's.
 
     example call:
-        invenio repository records list [--of out.json]
+        invenio repository rdmrecords list [--of out.json]
     """
     records = RDMRecordMetadata.query.filter_by(is_deleted=False)
     if output_file:
@@ -77,14 +77,14 @@ def list_records(output_file: TextIO):
         click.secho(f"{num_records} records", fg="green")
 
 
-@records.command("update")
+@rdmrecords.command("update")
 @option_input_file(required=True)
 @with_appcontext
 def update_records(input_file: TextIO):
     """Update records specified in input file.
 
     example call:
-        invenio repository records update --if in.json
+        invenio repository rdmrecords update --if in.json
     """
     records = json.load(input_file)
     identity = get_identity(
@@ -111,14 +111,14 @@ def update_records(input_file: TextIO):
         click.secho(f"'{pid}', successfully updated", fg="green")
 
 
-@records.command("delete")
+@rdmrecords.command("delete")
 @option_pid(required=True)
 @with_appcontext
 def delete_record(pid: str):
     """Delete record.
 
     example call:
-        invenio repository records delete -p "fcze8-4vx33"
+        invenio repository rdmrecords delete -p "fcze8-4vx33"
     """
     if not record_exists(pid):
         click.secho(f"'{pid}', does not exist or is deleted", fg="red")
@@ -132,7 +132,7 @@ def delete_record(pid: str):
     click.secho(f"'{pid}', soft-deleted", fg="green")
 
 
-@records.group()
+@rdmrecords.group()
 def identifiers():
     """Management commands for record identifiers."""
     pass
@@ -145,7 +145,7 @@ def list_identifiers(pid: str):
     """List record's identifiers.
 
     example call:
-        invenio repository records identifiers list -p <pid>
+        invenio repository rdmrecords identifiers list -p <pid>
     """
     if not record_exists(pid):
         click.secho(f"'{pid}', does not exist or is deleted", fg="red")
@@ -174,7 +174,7 @@ def add_identifier(identifier: map, pid: str):
     """Update the specified record's identifiers.
 
     example call:
-        invenio repository records identifiers add -p "fcze8-4vx33"
+        invenio repository rdmrecords identifiers add -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
     identifier = json.loads(identifier)
@@ -221,7 +221,7 @@ def replace_identifier(identifier: map, pid: str):
     """Update the specified record's identifiers.
 
     example call:
-        invenio repository records identifiers replace -p "fcze8-4vx33"
+        invenio repository rdmrecords identifiers replace -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
     identifier = json.loads(identifier)

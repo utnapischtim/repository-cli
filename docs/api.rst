@@ -14,13 +14,13 @@ API Docs
 CLI Commands
 ------------
 
-.. click:: repository_cli.cli.records:records
-   :prog: invenio repository records
+.. click:: repository_cli.cli.records:rdmrecords
+   :prog: invenio repository rdmrecords
    :nested: full
-   :commands: count, list
+   :commands: count, list, update, delete
 
 .. click:: repository_cli.cli.records:identifiers
-   :prog: invenio repository records identifiers
+   :prog: invenio repository rdmrecords identifiers
    :nested: full
 
 
