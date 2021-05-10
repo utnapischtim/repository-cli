@@ -17,7 +17,8 @@ from invenio_rdm_records.records.models import RDMRecordMetadata
 from invenio_records import Record
 
 from .click_options import (option_identifier, option_input_file,
-                            option_output_file, option_pid)
+                            option_output_file, option_pid,
+                            option_pid_identifier)
 from .util import (get_draft, get_identity, get_records_service, record_exists,
                    update_record)
 
@@ -133,9 +134,93 @@ def delete_record(pid: str):
 
 
 @rdmrecords.group()
+def pids():
+    """Management commands for record pids."""
+
+
+@pids.command("list")
+@option_pid(required=True)
+@with_appcontext
+def list_pids(pid: str):
+    """List record's pids.
+
+    example call:
+        invenio repository rdmrecords pids list -p <pid>
+    """
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        return
+
+    identity = get_identity()
+    service = get_records_service()
+    record_data = service.read(id_=pid, identity=identity).data.copy()
+    current_pids = record_data.get("pids", {}).items()
+
+    if len(current_pids) == 0:
+        fg = "yellow"
+        click.secho("record does not have any pids", fg=fg)
+
+    for index, pid in enumerate(current_pids):
+        # BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, RESET
+        fg = "blue" if index % 2 == 0 else "cyan"
+        click.secho(json.dumps(pid, indent=2), fg=fg)
+
+
+@pids.command("replace")
+@option_pid(required=True)
+@option_pid_identifier(required=True)
+@with_appcontext
+def replace_pid(pid: str, pid_identifier: str):
+    """Update pid doi to unmanaged.
+
+    example call:
+        invenio repository rdmrecords pids replace -p "fcze8-4vx33"
+        --pid-identifier ' { "doi":
+            { "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }
+        }'
+    """
+    pid_identifier = json.loads(pid_identifier)
+    if type(pid_identifier) is not dict:
+        click.secho(f"pid_identifier should be of type dictionary", fg="red")
+        return
+
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        return
+
+    identity = get_identity(
+        permission_name="system_process", role_name="admin"
+    )
+    service = get_records_service()
+
+    old_data = service.read(id_=pid, identity=identity).data.copy()
+    new_data = old_data.copy()
+    pids = new_data.get("pids", {})
+    pid_key = list(pid_identifier.keys())[0]
+
+    if pids.get(pid_key, None) is None:
+        click.secho(
+            f"'{pid}' does not have pid identifier '{pid_key}'", fg="yellow"
+        )
+        return
+
+    pids[pid_key] = pid_identifier.get(pid_key)
+    new_data["pids"] = pids
+
+    try:
+        update_record(
+            pid=pid, identity=identity, new_data=new_data, old_data=old_data
+        )
+    except Exception as e:
+        click.secho(f"'{pid}', problem during update, {e}", fg="red")
+        return
+
+    click.secho(f"'{pid}', successfully updated", fg="green")
+
+
+@rdmrecords.group()
 def identifiers():
     """Management commands for record identifiers."""
-    pass
 
 
 @identifiers.command("list")

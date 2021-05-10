@@ -21,6 +21,20 @@ def option_identifier(required: bool = False):
     )
 
 
+# --pid-identifier ' { "doi":
+#   { "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }
+# }'
+def option_pid_identifier(required: bool = False):
+    """Get parameter options for metadata identifier."""
+    return click.option(
+        "--pid-identifier",
+        "--pid-identifier",
+        "pid_identifier",
+        required=required,
+        help="pid identifier as JSON",
+    )
+
+
 # -p "fcze8-4vx33"
 def option_pid(required: bool = False):
     """Get parameter options for record PID."""
