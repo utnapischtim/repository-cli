@@ -26,7 +26,6 @@ from .util import (get_draft, get_identity, get_records_service, record_exists,
 @click.group()
 def rdmrecords():
     """Management commands for records."""
-    pass
 
 
 @rdmrecords.command("count")
@@ -87,7 +86,13 @@ def update_records(input_file: TextIO):
     example call:
         invenio repository rdmrecords update --if in.json
     """
-    records = json.load(input_file)
+    try:
+        records = json.load(input_file)
+    except Exception as e:
+        click.secho(e.msg, fg="red")
+        click.secho(f"The input file is not a valid JSON File", fg="red")
+        return
+
     identity = get_identity(
         permission_name="system_process", role_name="admin"
     )
@@ -175,13 +180,14 @@ def replace_pid(pid: str, pid_identifier: str):
 
     example call:
         invenio repository rdmrecords pids replace -p "fcze8-4vx33"
-        --pid-identifier ' { "doi":
-            { "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }
-        }'
+        --pid-identifier ' { "doi": {
+        "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }}'
     """
-    pid_identifier = json.loads(pid_identifier)
-    if type(pid_identifier) is not dict:
-        click.secho(f"pid_identifier should be of type dictionary", fg="red")
+    try:
+        pid_identifier_json = json.loads(pid_identifier)
+    except Exception as e:
+        click.secho(e.msg, fg="red")
+        click.secho(f"pid_identifier is not valid JSON", fg="red")
         return
 
     if not record_exists(pid):
@@ -196,7 +202,7 @@ def replace_pid(pid: str, pid_identifier: str):
     old_data = service.read(id_=pid, identity=identity).data.copy()
     new_data = old_data.copy()
     pids = new_data.get("pids", {})
-    pid_key = list(pid_identifier.keys())[0]
+    pid_key = list(pid_identifier_json.keys())[0]
 
     if pids.get(pid_key, None) is None:
         click.secho(
@@ -204,7 +210,7 @@ def replace_pid(pid: str, pid_identifier: str):
         )
         return
 
-    pids[pid_key] = pid_identifier.get(pid_key)
+    pids[pid_key] = pid_identifier_json.get(pid_key)
     new_data["pids"] = pids
 
     try:
@@ -255,16 +261,18 @@ def list_identifiers(pid: str):
 @option_identifier(required=True)
 @option_pid(required=True)
 @with_appcontext
-def add_identifier(identifier: map, pid: str):
+def add_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
 
     example call:
         invenio repository rdmrecords identifiers add -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
-    identifier = json.loads(identifier)
-    if type(identifier) is not dict:
-        click.secho(f"identifier should be of type dictionary", fg="red")
+    try:
+        identifier_json = json.loads(identifier)
+    except Exception as e:
+        click.secho(e.msg, fg="red")
+        click.secho(f"identifier is not valid JSON", fg="red")
         return
 
     if not record_exists(pid):
@@ -277,13 +285,13 @@ def add_identifier(identifier: map, pid: str):
 
     current_identifiers = record_data["metadata"].get("identifiers", [])
     current_schemes = [_["scheme"] for _ in current_identifiers]
-    scheme = identifier["scheme"]
+    scheme = identifier_json["scheme"]
     if scheme in current_schemes:
         click.secho(f"scheme '{scheme}' already in identifiers", fg="red")
         return
 
     old_data = record_data.copy()
-    current_identifiers.append(identifier)
+    current_identifiers.append(identifier_json)
     record_data["metadata"]["identifiers"] = current_identifiers
 
     try:
@@ -294,7 +302,7 @@ def add_identifier(identifier: map, pid: str):
         click.secho(f"'{pid}', Error during update, {e}", fg="red")
         return
 
-    click.secho(f"Identifier for '{pid}'' added.", fg="green")
+    click.secho(f"Identifier for '{pid}' added.", fg="green")
     return
 
 
@@ -302,16 +310,18 @@ def add_identifier(identifier: map, pid: str):
 @option_identifier(required=True)
 @option_pid(required=True)
 @with_appcontext
-def replace_identifier(identifier: map, pid: str):
+def replace_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
 
     example call:
         invenio repository rdmrecords identifiers replace -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
-    identifier = json.loads(identifier)
-    if type(identifier) is not dict:
-        click.secho(f"identifier should be of type dictionary", fg="red")
+    try:
+        identifier_json = json.loads(identifier)
+    except Exception as e:
+        click.secho(e.msg, fg="red")
+        click.secho(f"identifier is not valid JSON", fg="red")
         return
 
     if not record_exists(pid):
@@ -322,11 +332,11 @@ def replace_identifier(identifier: map, pid: str):
     service = get_records_service()
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_identifiers = record_data["metadata"].get("identifiers", [])
-    scheme = identifier["scheme"]
+    scheme = identifier_json["scheme"]
     replaced = False
     for index, ci in enumerate(current_identifiers):
         if ci["scheme"] == scheme:
-            current_identifiers[index] = identifier
+            current_identifiers[index] = identifier_json
             replaced = True
             break
 
@@ -345,4 +355,4 @@ def replace_identifier(identifier: map, pid: str):
         click.secho(f"'{pid}', problem during update, {e}", fg="red")
         return
 
-    click.secho(pid, fg="green")
+    click.secho(f"Identifier for '{pid}' replaced.", fg="green")

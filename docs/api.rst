@@ -1,15 +1,15 @@
 ..
-    Copyright (C) 2021 Graz University of Technology.
+   Copyright (C) 2021 Graz University of Technology.
 
-    repository-cli is free software; you can redistribute it and/or modify
-    it under the terms of the MIT License; see LICENSE file for more details.
+   repository-cli is free software; you can redistribute it and/or modify
+   it under the terms of the MIT License; see LICENSE file for more details.
 
 
 API Docs
 ========
 
 .. automodule:: repository_cli.ext
-    :members:
+   :members:
 
 CLI Commands
 ------------
@@ -23,6 +23,9 @@ CLI Commands
    :prog: invenio repository rdmrecords identifiers
    :nested: full
 
+.. click:: repository_cli.cli.records:pids
+   :prog: invenio repository rdmrecords pids
+   :nested: full
 
 Utility functions
 ------------------
