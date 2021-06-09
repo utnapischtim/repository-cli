@@ -11,7 +11,6 @@ See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
 
-import json
 import os
 import shutil
 import tempfile
@@ -22,14 +21,16 @@ from flask import Flask
 from flask_babelex import Babel
 from flask_principal import Identity
 from invenio_access.cli import allow_action
-from invenio_access.permissions import any_user, system_process
+from invenio_access.permissions import (any_user, system_identity,
+                                        system_process)
 from invenio_accounts.cli import roles_create
 from invenio_app.factory import create_app as create_rdm_app
 from invenio_db import db
 from invenio_files_rest.models import Location
-from invenio_jsonschemas.proxies import current_refresolver_store
 from invenio_rdm_records.cli import create_fake_record
 from invenio_rdm_records.proxies import current_rdm_records
+from invenio_vocabularies.proxies import current_service as vocabulary_service
+from invenio_vocabularies.records.api import Vocabulary
 from sqlalchemy_utils.functions import (create_database, database_exists,
                                         drop_database)
 
@@ -60,7 +61,7 @@ def create_app(instance_path):
     return factory
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def app(request):
     """Basic Flask application."""
     instance_path = tempfile.mkdtemp()
@@ -105,8 +106,8 @@ def app(request):
     return app
 
 
-@pytest.fixture()
-def app_initialized(app):
+@pytest.fixture(scope="module")
+def app_initialized(app, resource_type_item):
     """Flask application with data added."""
     d = app.config["DATADIR"]  # folder `data`
 
@@ -122,24 +123,61 @@ def app_initialized(app):
     runner.invoke(roles_create, ["admin"])
     runner.invoke(allow_action, ["superuser-access", "role", "admin"])
 
+    return app
+
+
+@pytest.fixture()
+def create_record(app_initialized):
+    """Create and publish new record."""
     record_service = current_rdm_records.records_service
     identity = Identity(1)
     identity.provides.add(system_process)
 
-    rdmrecords = []
-    for i in range(5):
-        record_json = fake_record()
-        rec = record_service.create(identity, record_json)
-        record_service.publish(rec.id, identity)
-        rdmrecords.append(rec)
+    record_json = minimal_record()
+    record_json["metadata"]["identifiers"] = [
+        {"identifier": "ark:/123/456", "scheme": "ark"}
+    ]
 
-    data = {
-        "rdmrecords": rdmrecords,
-    }
+    rec = record_service.create(data=record_json, identity=identity)
+    record_service.publish(id_=rec.id, identity=identity)
 
+    return rec
+
+
+def minimal_record():
+    """Minimal record data as dict coming from the external world.
+
+    https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L279
+    """
     return {
-        "app": app,
-        "data": data,
+        "pids": {},
+        "access": {
+            "record": "public",
+            "files": "public",
+        },
+        "files": {
+            "enabled": False,  # Most tests don't care about files
+        },
+        "metadata": {
+            "publication_date": "2020-06-01",
+            "resource_type": {"id": "image-photo"},
+            "creators": [
+                {
+                    "person_or_org": {
+                        "family_name": "Brown",
+                        "given_name": "Troy",
+                        "type": "personal",
+                    }
+                },
+                {
+                    "person_or_org": {
+                        "name": "Troy Inc.",
+                        "type": "organizational",
+                    },
+                },
+            ],
+            "title": "A Romans story",
+        },
     }
 
 
@@ -152,8 +190,8 @@ def fake_record():
     fake = Faker()
     date_pattern = ["%Y", "%m", "%d"]
     new_date = fake.date("-".join(date_pattern))
-
     record_json["metadata"]["publication_date"] = new_date
+
     return record_json
 
 
@@ -172,3 +210,47 @@ def pid_identifier():
         "doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}
     }
     return pid_identifier
+
+
+@pytest.fixture(scope="module")
+def resource_type_type(app):
+    """Resource type vocabulary type.
+
+    https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L398
+    """
+    return vocabulary_service.create_type(
+        system_identity, "resource_types", "rsrct"
+    )
+
+
+@pytest.fixture(scope="module")
+def resource_type_item(app, resource_type_type):
+    """Resource type vocabulary record.
+
+    https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L405
+    """
+    vocab = vocabulary_service.create(
+        system_identity,
+        {
+            "id": "image-photo",
+            "props": {
+                "csl": "graphic",
+                "datacite_general": "Image",
+                "datacite_type": "Photo",
+                "openaire_resourceType": "25",
+                "openaire_type": "dataset",
+                "schema.org": "https://schema.org/Photograph",
+                "subtype": "image-photo",
+                "subtype_name": "Photo",
+                "type": "image",
+                "type_icon": "chart bar outline",
+                "type_name": "Image",
+            },
+            "title": {"en": "Photo"},
+            "type": "resource_types",
+        },
+    )
+
+    Vocabulary.index.refresh()
+
+    return vocab

@@ -30,56 +30,41 @@ def test_base_command(app):
     assert response.exit_code == 0
 
 
-def test_count_no_entries(app):
-    runner = app.test_cli_runner()
+def test_count_with_entries(app_initialized, create_record):
+    runner = app_initialized.test_cli_runner()
     response = runner.invoke(count_records)
     assert response.exit_code == 0
-    assert "0 records" in response.output
+    assert "0 records" not in response.output
 
 
-def test_count_with_entries(app_initialized):
-    runner = app_initialized["app"].test_cli_runner()
-    response = runner.invoke(count_records)
-    assert response.exit_code == 0
-    assert "5 records" in response.output
-
-
-def test_list_no_entries(app):
-    runner = app.test_cli_runner()
+def test_list_with_entries(app_initialized, create_record):
+    runner = app_initialized.test_cli_runner()
+    record = create_record
+    r_id = record.id
+    title = record.data["metadata"]["title"]
     response = runner.invoke(list_records)
     assert response.exit_code == 0
-    assert "0 records" in response.output
-
-
-def test_list_with_entries(app_initialized):
-    runner = app_initialized["app"].test_cli_runner()
-    records = app_initialized["data"]["rdmrecords"]
-    r_id = records[0].id
-    title = records[0].data["metadata"]["title"]
-    response = runner.invoke(list_records)
-    assert response.exit_code == 0
-    assert f"{len(records)} records" in response.output
+    assert "0 records" not in response.output
     assert f"{ r_id }" in response.output
     assert f"{ title }" in response.output
 
 
-def test_list_output_file(app_initialized):
+def test_list_output_file(app_initialized, create_record):
     filename = "out.json"
-    records = app_initialized["data"]["rdmrecords"]
-    runner = app_initialized["app"].test_cli_runner()
+    runner = app_initialized.test_cli_runner()
     response = runner.invoke(list_records, ["--of", filename])
     os.remove(filename)
     assert response.exit_code == 0
-    assert f"wrote {len(records)} records to {filename}" in response.output
+    assert "0 records" not in response.output
+    assert f"records to {filename}" in response.output
 
 
-def test_update(app_initialized):
+def test_update(app_initialized, create_record):
     filename = "out.json"
-    records = app_initialized["data"]["rdmrecords"]
-    runner = app_initialized["app"].test_cli_runner()
+    runner = app_initialized.test_cli_runner()
     response = runner.invoke(list_records, ["--of", filename])
     assert response.exit_code == 0
-    assert f"wrote {len(records)} records to {filename}" in response.output
+    assert f"records to {filename}" in response.output
 
     response = runner.invoke(update_records, ["--if", filename])
     os.remove(filename)
@@ -87,22 +72,20 @@ def test_update(app_initialized):
     assert "successfully updated" in response.output
 
 
-def test_update_ill_formatted_file(app_initialized):
+def test_update_ill_formatted_file(app_initialized, create_record):
     filename = "out.json"
     f = open(filename, mode="w")
     f.write("not a valid JSON representation")
-    records = app_initialized["data"]["rdmrecords"]
-    runner = app_initialized["app"].test_cli_runner()
+    runner = app_initialized.test_cli_runner()
     response = runner.invoke(update_records, ["--if", filename])
     os.remove(filename)
     assert response.exit_code == 0
     assert "The input file is not a valid JSON File" in response.output
 
 
-def test_delete(app_initialized):
-    records = app_initialized["data"]["rdmrecords"]
-    r_id = records[0].id
-    runner = app_initialized["app"].test_cli_runner()
+def test_delete(app_initialized, create_record):
+    r_id = create_record.id
+    runner = app_initialized.test_cli_runner()
     response = runner.invoke(delete_record, ["--pid", r_id])
     assert response.exit_code == 0
     assert f"'{r_id}', soft-deleted" in response.output

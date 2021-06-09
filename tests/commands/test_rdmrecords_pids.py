@@ -22,26 +22,24 @@ from repository_cli import RepositoryCli
 from repository_cli.cli.records import list_pids, replace_pid
 
 
-def test_list_pids_with_entries(app_initialized):
-    runner = app_initialized["app"].test_cli_runner()
-    records = app_initialized["data"]["rdmrecords"]
-    r_id = records[0].id
+def test_list_pids_with_entries(app_initialized, create_record):
+    runner = app_initialized.test_cli_runner()
+    r_id = create_record.id
     response = runner.invoke(list_pids, ["--pid", r_id])
     assert response.exit_code == 0
 
 
 def test_list_pids_record_not_found(app_initialized):
-    runner = app_initialized["app"].test_cli_runner()
+    runner = app_initialized.test_cli_runner()
     r_id = "this does not exist"
     response = runner.invoke(list_pids, ["--pid", r_id])
     assert response.exit_code == 0
     assert "does not exist or is deleted" in response.output
 
 
-def test_replace_pid(app_initialized, pid_identifier):
-    runner = app_initialized["app"].test_cli_runner()
-    records = app_initialized["data"]["rdmrecords"]
-    r_id = records[0].id
+def test_replace_pid(app_initialized, pid_identifier, create_record):
+    runner = app_initialized.test_cli_runner()
+    r_id = create_record.id
     response = runner.invoke(
         replace_pid,
         ["--pid", r_id, "--pid-identifier", json.dumps(pid_identifier)],
@@ -50,10 +48,11 @@ def test_replace_pid(app_initialized, pid_identifier):
     assert f"'{r_id}', successfully updated" in response.output
 
 
-def test_replace_pid_pid_does_not_exist(app_initialized, pid_identifier):
-    runner = app_initialized["app"].test_cli_runner()
-    records = app_initialized["data"]["rdmrecords"]
-    r_id = records[0].id
+def test_replace_pid_pid_does_not_exist(
+    app_initialized, pid_identifier, create_record
+):
+    runner = app_initialized.test_cli_runner()
+    r_id = create_record.id
     pid_identifier["unknown_identifier"] = pid_identifier.pop(
         list(pid_identifier.keys())[0]
     )
@@ -65,10 +64,9 @@ def test_replace_pid_pid_does_not_exist(app_initialized, pid_identifier):
     assert "does not have pid identifier" in response.output
 
 
-def test_replace_pid_wrong_identifier_type(app_initialized):
-    runner = app_initialized["app"].test_cli_runner()
-    records = app_initialized["data"]["rdmrecords"]
-    r_id = records[0].id
+def test_replace_pid_wrong_identifier_type(app_initialized, create_record):
+    runner = app_initialized.test_cli_runner()
+    r_id = create_record.id
     response = runner.invoke(
         replace_pid, ["--pid", r_id, "--pid-identifier", "this is not a dict"]
     )
@@ -77,8 +75,7 @@ def test_replace_pid_wrong_identifier_type(app_initialized):
 
 
 def test_replace_pid_record_not_found(app_initialized, pid_identifier):
-    runner = app_initialized["app"].test_cli_runner()
-    records = app_initialized["data"]["rdmrecords"]
+    runner = app_initialized.test_cli_runner()
     r_id = "this does not exist"
     response = runner.invoke(
         replace_pid,

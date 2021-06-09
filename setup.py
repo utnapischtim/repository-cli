@@ -16,13 +16,12 @@ history = open("CHANGES.rst").read()
 
 tests_require = [
     "pytest-invenio>=1.4.0",
-    "invenio-app>=1.3.0,<2.0.0",
-    "invenio_app_rdm==3.0.0",
+    "invenio_app_rdm==4.0.1",
 ]
 
 # Should follow inveniosoftware/invenio versions
-invenio_search_version = ">=1.4.0,<2.0.0"
-invenio_db_version = ">=1.0.5,<2.0.0"
+invenio_search_version = ">=1.4.1,<1.5.0"
+invenio_db_version = ">=1.0.8,<1.1.0"
 
 extras_require = {
     "elasticsearch7": [
@@ -56,12 +55,16 @@ setup_requires = [
 
 install_requires = [
     "click>=7.1.1,<8.0",
-    "invenio-access>=1.4.2",
-    "invenio-accounts>=1.4.0",
-    "invenio_rdm_records>=0.29.0,<0.30.0",
+    "invenio-rdm-records>=0.30.4,<0.31.0",
+    "flask>=1.1,<2.0",
+    "invenio-records-resources<0.16.0,>=0.15.2"
+
+    # TODO: https://github.com/tu-graz-library/repository-cli/issues/22 : Should be solved via this issue
     "elasticsearch>=7.0.0,<8.0.0",
     "elasticsearch_dsl>=7.2.1",
     "SQLAlchemy-Continuum>=1.3.11",
+    "SQLAlchemy<1.4.0",
+    "SQLAlchemy-Utils<0.36,>=0.33.1"
     "invenio_search>=1.4.0,<2.0.0",
     "psycopg2-binary>=2.8.6",
 ]
