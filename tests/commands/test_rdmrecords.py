@@ -19,9 +19,9 @@ from flask import Flask
 from flask_babelex import Babel
 
 from repository_cli import RepositoryCli
-from repository_cli.cli.records import (count_records, delete_record,
-                                        list_records, rdmrecords,
-                                        update_records)
+from repository_cli.cli.records import (count_records, delete_draft,
+                                        delete_record, list_records,
+                                        rdmrecords, update_records)
 
 
 def test_base_command(app):
@@ -72,7 +72,7 @@ def test_update(app_initialized, create_record):
     assert "successfully updated" in response.output
 
 
-def test_update_ill_formatted_file(app_initialized, create_record):
+def test_update_ill_formatted_file(app_initialized):
     filename = "out.json"
     f = open(filename, mode="w")
     f.write("not a valid JSON representation")
@@ -89,3 +89,27 @@ def test_delete(app_initialized, create_record):
     response = runner.invoke(delete_record, ["--pid", r_id])
     assert response.exit_code == 0
     assert f"'{r_id}', soft-deleted" in response.output
+
+
+def test_delete_draft_success(app_initialized, create_draft):
+    r_id = create_draft.id
+    runner = app_initialized.test_cli_runner()
+    response = runner.invoke(delete_draft, ["--pid", r_id])
+    assert response.exit_code == 0
+    assert f"'{r_id}', deleted draft" in response.output
+
+
+def test_delete_draft_no_draft(app_initialized, create_record):
+    r_id = create_record.id
+    runner = app_initialized.test_cli_runner()
+    response = runner.invoke(delete_draft, ["--pid", r_id])
+    assert response.exit_code == 0
+    assert f"'{r_id}', does not have a draft" in response.output
+
+
+def test_delete_draft_pid_does_not_exist(app_initialized):
+    r_id = "himbeere"
+    runner = app_initialized.test_cli_runner()
+    response = runner.invoke(delete_draft, ["--pid", r_id])
+    assert response.exit_code == 0
+    assert f"'{r_id}', does not exist" in response.output

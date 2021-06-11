@@ -144,6 +144,17 @@ def create_record(app_initialized):
     return rec
 
 
+@pytest.fixture()
+def create_draft(app_initialized, create_record):
+    """Create draft for record."""
+    record_service = current_rdm_records.records_service
+    identity = Identity(1)
+    identity.provides.add(system_process)
+
+    draft = record_service.edit(id_=create_record.id, identity=identity)
+    return draft
+
+
 def minimal_record():
     """Minimal record data as dict coming from the external world.
 

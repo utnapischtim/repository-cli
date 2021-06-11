@@ -138,6 +138,33 @@ def delete_record(pid: str):
     click.secho(f"'{pid}', soft-deleted", fg="green")
 
 
+@rdmrecords.command("delete-draft")
+@option_pid(required=True)
+@with_appcontext
+def delete_draft(pid: str):
+    """Delete draft.
+
+    example call:
+        invenio repository rdmrecords delete-draft -p "fcze8-4vx33"
+    """
+    if not record_exists(pid):
+        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        return
+
+    identity = get_identity(
+        permission_name="system_process", role_name="admin"
+    )
+
+    draft = get_draft(pid=pid, identity=identity)
+    if draft is None:
+        click.secho(f"'{pid}', does not have a draft", fg="yellow")
+        return
+
+    service = get_records_service()
+    service.delete_draft(id_=pid, identity=identity)
+    click.secho(f"'{pid}', deleted draft", fg="green")
+
+
 @rdmrecords.group()
 def pids():
     """Management commands for record pids."""
