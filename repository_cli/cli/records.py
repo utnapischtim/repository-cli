@@ -16,11 +16,20 @@ from flask_principal import Identity
 from invenio_rdm_records.records.models import RDMRecordMetadata
 from invenio_records import Record
 
-from .click_options import (option_identifier, option_input_file,
-                            option_output_file, option_pid,
-                            option_pid_identifier)
-from .util import (get_draft, get_identity, get_records_service, record_exists,
-                   update_record)
+from .click_options import (
+    option_identifier,
+    option_input_file,
+    option_output_file,
+    option_pid,
+    option_pid_identifier,
+)
+from .util import (
+    get_draft,
+    get_identity,
+    get_records_service,
+    record_exists,
+    update_record,
+)
 
 
 @click.group()
@@ -70,9 +79,7 @@ def list_records(output_file: TextIO):
     if output_file:
         output_file.write("]")
 
-        click.secho(
-            f"wrote {num_records} records to {output_file.name}", fg="green"
-        )
+        click.secho(f"wrote {num_records} records to {output_file.name}", fg="green")
     else:
         click.secho(f"{num_records} records", fg="green")
 
@@ -93,9 +100,7 @@ def update_records(input_file: TextIO):
         click.secho(f"The input file is not a valid JSON File", fg="red")
         return
 
-    identity = get_identity(
-        permission_name="system_process", role_name="admin"
-    )
+    identity = get_identity(permission_name="system_process", role_name="admin")
     service = get_records_service()
 
     for record in records:
@@ -130,9 +135,7 @@ def delete_record(pid: str):
         click.secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
-    identity = get_identity(
-        permission_name="system_process", role_name="admin"
-    )
+    identity = get_identity(permission_name="system_process", role_name="admin")
     service = get_records_service()
     service.delete(id_=pid, identity=identity)
     click.secho(f"'{pid}', soft-deleted", fg="green")
@@ -151,9 +154,7 @@ def delete_draft(pid: str):
         click.secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
-    identity = get_identity(
-        permission_name="system_process", role_name="admin"
-    )
+    identity = get_identity(permission_name="system_process", role_name="admin")
 
     draft = get_draft(pid=pid, identity=identity)
     if draft is None:
@@ -221,9 +222,7 @@ def replace_pid(pid: str, pid_identifier: str):
         click.secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
-    identity = get_identity(
-        permission_name="system_process", role_name="admin"
-    )
+    identity = get_identity(permission_name="system_process", role_name="admin")
     service = get_records_service()
 
     old_data = service.read(id_=pid, identity=identity).data.copy()
@@ -232,18 +231,14 @@ def replace_pid(pid: str, pid_identifier: str):
     pid_key = list(pid_identifier_json.keys())[0]
 
     if pids.get(pid_key, None) is None:
-        click.secho(
-            f"'{pid}' does not have pid identifier '{pid_key}'", fg="yellow"
-        )
+        click.secho(f"'{pid}' does not have pid identifier '{pid_key}'", fg="yellow")
         return
 
     pids[pid_key] = pid_identifier_json.get(pid_key)
     new_data["pids"] = pids
 
     try:
-        update_record(
-            pid=pid, identity=identity, new_data=new_data, old_data=old_data
-        )
+        update_record(pid=pid, identity=identity, new_data=new_data, old_data=old_data)
     except Exception as e:
         click.secho(f"'{pid}', problem during update, {e}", fg="red")
         return

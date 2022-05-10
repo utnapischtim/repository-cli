@@ -46,9 +46,9 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"repository-cli"
-copyright = u"2021, Graz University of Technology"
-author = u"Graz University of Technology"
+project = "repository-cli"
+copyright = "2021, Graz University of Technology"
+author = "Graz University of Technology"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -243,8 +243,8 @@ latex_documents = [
     (
         master_doc,
         "repository-cli.tex",
-        u"repository-cli Documentation",
-        u"Graz University of Technology",
+        "repository-cli Documentation",
+        "Graz University of Technology",
         "manual",
     ),
 ]
@@ -278,7 +278,7 @@ man_pages = [
     (
         master_doc,
         "repository-cli",
-        u"repository-cli Documentation",
+        "repository-cli Documentation",
         [author],
         1,
     )
@@ -297,7 +297,7 @@ texinfo_documents = [
     (
         master_doc,
         "repository-cli",
-        u"repository-cli Documentation",
+        "repository-cli Documentation",
         author,
         "repository-cli",
         "CLI utilities for TU Graz Repository",

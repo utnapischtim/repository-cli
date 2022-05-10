@@ -21,8 +21,7 @@ from flask import Flask
 from flask_babelex import Babel
 from flask_principal import Identity
 from invenio_access.cli import allow_action
-from invenio_access.permissions import (any_user, system_identity,
-                                        system_process)
+from invenio_access.permissions import any_user, system_identity, system_process
 from invenio_accounts.cli import roles_create
 from invenio_app.factory import create_app as create_rdm_app
 from invenio_db import db
@@ -31,8 +30,7 @@ from invenio_rdm_records.cli import create_fake_record
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_vocabularies.proxies import current_service as vocabulary_service
 from invenio_vocabularies.records.api import Vocabulary
-from sqlalchemy_utils.functions import (create_database, database_exists,
-                                        drop_database)
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from repository_cli import RepositoryCli
 
@@ -229,9 +227,7 @@ def resource_type_type(app):
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L398
     """
-    return vocabulary_service.create_type(
-        system_identity, "resource_types", "rsrct"
-    )
+    return vocabulary_service.create_type(system_identity, "resource_types", "rsrct")
 
 
 @pytest.fixture(scope="module")

@@ -19,9 +19,14 @@ from flask import Flask
 from flask_babelex import Babel
 
 from repository_cli import RepositoryCli
-from repository_cli.cli.records import (count_records, delete_draft,
-                                        delete_record, list_records,
-                                        rdmrecords, update_records)
+from repository_cli.cli.records import (
+    count_records,
+    delete_draft,
+    delete_record,
+    list_records,
+    rdmrecords,
+    update_records,
+)
 
 
 def test_base_command(app):

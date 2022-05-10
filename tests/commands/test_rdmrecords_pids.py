@@ -48,9 +48,7 @@ def test_replace_pid(app_initialized, pid_identifier, create_record):
     assert f"'{r_id}', successfully updated" in response.output
 
 
-def test_replace_pid_pid_does_not_exist(
-    app_initialized, pid_identifier, create_record
-):
+def test_replace_pid_pid_does_not_exist(app_initialized, pid_identifier, create_record):
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
     pid_identifier["unknown_identifier"] = pid_identifier.pop(

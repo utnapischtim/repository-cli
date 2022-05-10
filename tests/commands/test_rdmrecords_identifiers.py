@@ -18,8 +18,11 @@ from flask import Flask
 from flask_babelex import Babel
 
 from repository_cli import RepositoryCli
-from repository_cli.cli.records import (add_identifier, list_identifiers,
-                                        replace_identifier)
+from repository_cli.cli.records import (
+    add_identifier,
+    list_identifiers,
+    replace_identifier,
+)
 
 
 def test_list_identifiers(app_initialized, create_record):
@@ -49,9 +52,7 @@ def test_add_identifier(app_initialized, identifier, create_record):
     assert f"Identifier for '{r_id}' added" in response.output
 
 
-def test_add_identifier_scheme_exists(
-    app_initialized, identifier, create_record
-):
+def test_add_identifier_scheme_exists(app_initialized, identifier, create_record):
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
     response = runner.invoke(
@@ -63,10 +64,7 @@ def test_add_identifier_scheme_exists(
         add_identifier, ["--pid", r_id, "--identifier", json.dumps(identifier)]
     )
     assert response.exit_code == 0
-    assert (
-        f"scheme '{identifier['scheme']}' already in identifiers"
-        in response.output
-    )
+    assert f"scheme '{identifier['scheme']}' already in identifiers" in response.output
 
 
 def test_add_identifier_wrong_identifier_type(app_initialized, create_record):
@@ -111,15 +109,10 @@ def test_replace_identifier_scheme_does_not_exist(
         ["--pid", r_id, "--identifier", json.dumps(identifier)],
     )
     assert response.exit_code == 0
-    assert (
-        f"scheme '{identifier['scheme']}' not in identifiers"
-        in response.output
-    )
+    assert f"scheme '{identifier['scheme']}' not in identifiers" in response.output
 
 
-def test_replace_identifier_wrong_identifier_type(
-    app_initialized, create_record
-):
+def test_replace_identifier_wrong_identifier_type(app_initialized, create_record):
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
     response = runner.invoke(
