@@ -8,6 +8,7 @@
 """CLI utilities for TU Graz Repository."""
 
 from .ext import RepositoryCli
-from .version import __version__
+
+__version__ = "0.1.1"
 
 __all__ = ("__version__", "RepositoryCli")
