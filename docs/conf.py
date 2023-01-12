@@ -9,8 +9,6 @@
 
 from repository_cli import __version__
 
-import sphinx.environment
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -47,7 +45,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "repository-cli"
-copyright = "2021, Graz University of Technology"
+copyright = "2023, Graz University of Technology"
 author = "Graz University of Technology"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -64,7 +62,7 @@ release = __version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
