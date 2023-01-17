@@ -7,7 +7,9 @@
 
 """Management commands for records."""
 
+from io import SEEK_END, SEEK_SET
 import json
+import os
 from typing import TextIO
 
 import click
@@ -378,3 +380,76 @@ def replace_identifier(identifier: str, pid: str):
         return
 
     click.secho(f"Identifier for '{pid}' replaced.", fg="green")
+
+
+@rdmrecords.command('add_file')
+@click.argument('recid', type=str)
+@click.argument('fp', type=click.File('rb'))
+@click.option('--replace-existing', '-f', is_flag=True, default=False)
+@with_appcontext
+def add_file(recid, fp, replace_existing):
+    """Add a new file to a published record."""
+    from invenio_db import db
+    from invenio_access.permissions import system_identity
+    record = get_records_service().read(identity=system_identity, id_=recid)._record
+
+    bucket = files.bucket
+    files = files
+
+    key = os.path.basename(fp.name)
+
+    obj = files[key]
+    if obj is not None and not replace_existing:
+        click.echo(click.style(u'File with key "{key}" already exists.'
+                   u' Use `--replace-existing/-f` to overwrite it.'.format(
+                        key=key, recid=recid), fg='red'))
+        return
+
+    fp.seek(SEEK_SET, SEEK_END)
+    size = fp.tell()
+    fp.seek(SEEK_SET)
+
+    click.echo(u'Will add the following file:\n')
+    click.echo(click.style(
+        u'  key: "{key}"\n'
+        u'  bucket: {bucket}\n'
+        u'  size: {size}\n'
+        u''.format(
+            key=key,
+            bucket=bucket.id,
+            size=size),
+        fg='green'))
+    click.echo(u'to record:\n')
+    click.echo(click.style(
+        u'  Title: "{title}"\n'
+        u'  RECID: {recid}\n'
+        u'  UUID: {uuid}\n'
+        u''.format(
+            recid=record['id'],
+            title=record.get('metadata', {}).get('title'),
+            uuid=record.id),
+        fg='green'))
+    if replace_existing and obj is not None:
+        click.echo(u'and remove the file:\n')
+        click.echo(click.style(
+            u'  key: "{key}"\n'
+            u'  bucket: {bucket}\n'
+            u'  size: {size}\n'
+            u''.format(
+                key=obj.key,
+                bucket=bucket,
+                size=obj.file.size),
+            fg='green'))
+
+    if click.confirm(u'Continue?'):
+        files.unlock()
+        if obj is not None and replace_existing:
+            files.delete(obj.key)
+        files.create(key, stream=fp)
+        files.lock()
+
+        record.commit()
+        db.session.commit()
+        click.echo(click.style(u'File added successfully.', fg='green'))
+    else:
+        click.echo(click.style(u'File addition aborted.', fg='green'))
