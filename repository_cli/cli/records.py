@@ -7,16 +7,16 @@
 
 """Management commands for records."""
 
-from io import SEEK_END, SEEK_SET
 import json
 import os
+from io import SEEK_END, SEEK_SET
 from typing import TextIO
 
 import click
 from flask.cli import with_appcontext
-from flask_principal import Identity
+from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_rdm_records.records.models import RDMRecordMetadata
-from invenio_records import Record
 
 from .click_options import (
     option_identifier,
@@ -382,66 +382,94 @@ def replace_identifier(identifier: str, pid: str):
     click.secho(f"Identifier for '{pid}' replaced.", fg="green")
 
 
-@rdmrecords.command('add_file')
-@click.argument('recid', type=str)
-@click.argument('fp', type=click.File('rb'))
-@click.option('--replace-existing', '-f', is_flag=True, default=False)
+@rdmrecords.command("add_file")
+@click.argument("recid", type=str)
+@click.argument("fp", type=click.File("rb"))
+@click.option("--replace-existing", "-f", is_flag=True, default=False)
+@click.option("--data-model", default="rdm")
 @with_appcontext
-def add_file(recid, fp, replace_existing):
+def add_file(recid, fp, replace_existing, data_model):
     """Add a new file to a published record."""
-    from invenio_db import db
-    from invenio_access.permissions import system_identity
-    record = get_records_service().read(identity=system_identity, id_=recid)._record
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
 
+    try:
+        record = service.read(identity=identity, id_=recid)._record
+    except PIDDoesNotExistError as e:
+        click.echo(
+            click.style(
+                "Record with type '{pid_type}' and id '{pid_value}' does not exist.".format(
+                    pid_type=e.pid_type, pid_value=e.pid_value
+                ),
+                fg="red",
+            )
+        )
+        return
+
+    files = record.files
     bucket = files.bucket
-    files = files
 
     key = os.path.basename(fp.name)
+    obj = None
+    try:
+        obj = files[key]
+    except Exception as e:
+        click.echo("File does not yet exist.")
 
-    obj = files[key]
     if obj is not None and not replace_existing:
-        click.echo(click.style(u'File with key "{key}" already exists.'
-                   u' Use `--replace-existing/-f` to overwrite it.'.format(
-                        key=key, recid=recid), fg='red'))
+        click.echo(
+            click.style(
+                'File with key "{key}" already exists.'
+                " Use `--replace-existing/-f` to overwrite it.".format(
+                    key=key, recid=recid
+                ),
+                fg="red",
+            )
+        )
         return
 
     fp.seek(SEEK_SET, SEEK_END)
     size = fp.tell()
     fp.seek(SEEK_SET)
 
-    click.echo(u'Will add the following file:\n')
-    click.echo(click.style(
-        u'  key: "{key}"\n'
-        u'  bucket: {bucket}\n'
-        u'  size: {size}\n'
-        u''.format(
-            key=key,
-            bucket=bucket.id,
-            size=size),
-        fg='green'))
-    click.echo(u'to record:\n')
-    click.echo(click.style(
-        u'  Title: "{title}"\n'
-        u'  RECID: {recid}\n'
-        u'  UUID: {uuid}\n'
-        u''.format(
-            recid=record['id'],
-            title=record.get('metadata', {}).get('title'),
-            uuid=record.id),
-        fg='green'))
+    click.echo("Will add the following file:\n")
+    click.echo(
+        click.style(
+            '  key: "{key}"\n'
+            "  bucket: {bucket}\n"
+            "  size: {size}\n"
+            "".format(key=key, bucket=bucket.id, size=size),
+            fg="green",
+        )
+    )
+    click.echo("to record:\n")
+    click.echo(
+        click.style(
+            '  Title: "{title}"\n'
+            "  RECID: {recid}\n"
+            "  UUID: {uuid}\n"
+            "".format(
+                recid=record["id"],
+                title=record.get("metadata", {}).get("title"),
+                uuid=record.id,
+            ),
+            fg="green",
+        )
+    )
     if replace_existing and obj is not None:
-        click.echo(u'and remove the file:\n')
-        click.echo(click.style(
-            u'  key: "{key}"\n'
-            u'  bucket: {bucket}\n'
-            u'  size: {size}\n'
-            u''.format(
-                key=obj.key,
-                bucket=bucket,
-                size=obj.file.size),
-            fg='green'))
+        click.echo("and remove the file:\n")
+        click.echo(
+            click.style(
+                '  key: "{key}"\n'
+                "  bucket: {bucket}\n"
+                "  size: {size}\n"
+                "".format(key=obj.key, bucket=bucket, size=obj.file.size),
+                fg="green",
+            )
+        )
 
-    if click.confirm(u'Continue?'):
+    if click.confirm("Continue?"):
+        files.enabled = True  # this allows to also add files to metadata only records
         files.unlock()
         if obj is not None and replace_existing:
             files.delete(obj.key)
@@ -450,6 +478,6 @@ def add_file(recid, fp, replace_existing):
 
         record.commit()
         db.session.commit()
-        click.echo(click.style(u'File added successfully.', fg='green'))
+        click.echo(click.style("File added successfully.", fg="green"))
     else:
-        click.echo(click.style(u'File addition aborted.', fg='green'))
+        click.echo(click.style("File addition aborted.", fg="green"))

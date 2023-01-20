@@ -14,6 +14,7 @@ from invenio_admin.permissions import action_admin_access
 from invenio_drafts_resources.records.api import Draft
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_rdm_records.services import RDMRecordService
+from invenio_records_marc21 import current_records_marc21
 
 
 def get_identity(permission_name: str = "any_user", role_name: str = None):
@@ -54,9 +55,14 @@ def get_draft(pid: str, identity: Identity) -> Draft:
     return draft
 
 
-def get_records_service() -> RDMRecordService:
+def get_records_service(data_model="rdm") -> RDMRecordService:
     """Get records service."""
-    return current_rdm_records.records_service
+    available_services = {
+        "rdm": current_rdm_records.records_service,
+        "marc21": current_records_marc21.records_service,
+    }
+
+    return available_services.get(data_model, current_rdm_records.records_service)
 
 
 def update_record(pid: str, identity: Identity, new_data, old_data):
