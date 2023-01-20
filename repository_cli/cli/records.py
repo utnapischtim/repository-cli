@@ -387,8 +387,9 @@ def replace_identifier(identifier: str, pid: str):
 @click.argument("fp", type=click.File("rb"))
 @click.option("--replace-existing", "-f", is_flag=True, default=False)
 @click.option("--data-model", default="rdm")
+@click.option("--enable-files", is_flag=True, default=False)
 @with_appcontext
-def add_file(recid, fp, replace_existing, data_model):
+def add_file(recid, fp, replace_existing, data_model, enable_files):
     """Add a new file to a published record."""
     identity = get_identity("system_process", role_name="admin")
     service = get_records_service(data_model=data_model)
@@ -396,13 +397,11 @@ def add_file(recid, fp, replace_existing, data_model):
     try:
         record = service.read(identity=identity, id_=recid)._record
     except PIDDoesNotExistError as e:
-        click.echo(
-            click.style(
-                "Record with type '{pid_type}' and id '{pid_value}' does not exist.".format(
-                    pid_type=e.pid_type, pid_value=e.pid_value
-                ),
-                fg="red",
-            )
+        click.secho(
+            "Record with type '{pid_type}' and id '{pid_value}' does not exist.".format(
+                pid_type=e.pid_type, pid_value=e.pid_value
+            ),
+            fg="red",
         )
         return
 
@@ -417,14 +416,20 @@ def add_file(recid, fp, replace_existing, data_model):
         click.echo("File does not yet exist.")
 
     if obj is not None and not replace_existing:
-        click.echo(
-            click.style(
-                'File with key "{key}" already exists.'
-                " Use `--replace-existing/-f` to overwrite it.".format(
-                    key=key, recid=recid
-                ),
-                fg="red",
-            )
+        click.secho(
+            'File with key "{key}" already exists.'
+            " Use `--replace-existing/-f` to overwrite it.".format(
+                key=key, recid=recid
+            ),
+            fg="red",
+        )
+        return
+
+    if not files.enabled and not enable_files:
+        click.secho(
+            "Files are not enabled for this record (metadata-only)."
+            "  Use `--enable-files` to add it anyway.",
+            fg="red",
         )
         return
 
@@ -433,39 +438,33 @@ def add_file(recid, fp, replace_existing, data_model):
     fp.seek(SEEK_SET)
 
     click.echo("Will add the following file:\n")
-    click.echo(
-        click.style(
-            '  key: "{key}"\n'
-            "  bucket: {bucket}\n"
-            "  size: {size}\n"
-            "".format(key=key, bucket=bucket.id, size=size),
-            fg="green",
-        )
+    click.secho(
+        '  key: "{key}"\n'
+        "  bucket: {bucket}\n"
+        "  size: {size}\n"
+        "".format(key=key, bucket=bucket.id, size=size),
+        fg="green",
     )
     click.echo("to record:\n")
-    click.echo(
-        click.style(
-            '  Title: "{title}"\n'
-            "  RECID: {recid}\n"
-            "  UUID: {uuid}\n"
-            "".format(
-                recid=record["id"],
-                title=record.get("metadata", {}).get("title"),
-                uuid=record.id,
-            ),
+    click.secho(
+        '  Title: "{title}"\n'
+        "  ID   : {recid}\n"
+        "  UUID : {uuid}\n"
+        "".format(
+            recid=record["id"],
+            title=record.get("metadata", {}).get("title"),
+            uuid=record.id,
             fg="green",
         )
     )
     if replace_existing and obj is not None:
         click.echo("and remove the file:\n")
-        click.echo(
-            click.style(
-                '  key: "{key}"\n'
-                "  bucket: {bucket}\n"
-                "  size: {size}\n"
-                "".format(key=obj.key, bucket=bucket, size=obj.file.size),
-                fg="green",
-            )
+        click.secho(
+            '  key: "{key}"\n'
+            "  bucket: {bucket}\n"
+            "  size: {size}\n"
+            "".format(key=obj.key, bucket=bucket, size=obj.file.size),
+            fg="green",
         )
 
     if click.confirm("Continue?"):
@@ -478,6 +477,6 @@ def add_file(recid, fp, replace_existing, data_model):
 
         record.commit()
         db.session.commit()
-        click.echo(click.style("File added successfully.", fg="green"))
+        click.secho("File added successfully.", fg="green")
     else:
-        click.echo(click.style("File addition aborted.", fg="green"))
+        click.secho("File addition aborted.", fg="green")
