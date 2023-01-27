@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Graz University of Technology.
+# Copyright (C) 2021-2023 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -13,6 +13,7 @@ from io import SEEK_END, SEEK_SET
 from typing import TextIO
 
 import click
+from click import secho
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -33,6 +34,8 @@ from .util import (
     update_record,
 )
 
+_COLORS = {0: "blue", 1: "cyan"}
+
 
 @click.group()
 def rdmrecords():
@@ -49,7 +52,7 @@ def count_records():
     """
     records = RDMRecordMetadata.query.filter_by(is_deleted=False)
     num_records = records.count()
-    click.secho(f"{num_records} records", fg="green")
+    secho(f"{num_records} records", fg="green")
 
 
 @rdmrecords.command("list")
@@ -75,15 +78,14 @@ def list_records(output_file: TextIO):
             if index < (num_records - 1):
                 output_file.write(",\n")
         else:
-            fg = "blue" if index % 2 == 0 else "cyan"
-            click.secho(json.dumps(metadata.json, indent=2), fg=fg)
+            secho(json.dumps(metadata.json, indent=2), fg=_COLORS[index % 2])
 
     if output_file:
         output_file.write("]")
 
-        click.secho(f"wrote {num_records} records to {output_file.name}", fg="green")
+        secho(f"wrote {num_records} records to {output_file.name}", fg="green")
     else:
-        click.secho(f"{num_records} records", fg="green")
+        secho(f"{num_records} records", fg="green")
 
 
 @rdmrecords.command("update")
@@ -98,8 +100,8 @@ def update_records(input_file: TextIO):
     try:
         records = json.load(input_file)
     except Exception as e:
-        click.secho(e.msg, fg="red")
-        click.secho(f"The input file is not a valid JSON File", fg="red")
+        secho(e.msg, fg="red")
+        secho("The input file is not a valid JSON File", fg="red")
         return
 
     identity = get_identity(permission_name="system_process", role_name="admin")
@@ -107,9 +109,9 @@ def update_records(input_file: TextIO):
 
     for record in records:
         pid = record["id"]
-        click.secho(f"\n'{pid}', trying to update", fg="yellow")
+        secho(f"\n'{pid}', trying to update", fg="yellow")
         if not record_exists(pid):
-            click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+            secho(f"'{pid}', does not exist or is deleted", fg="red")
             continue
 
         old_data = service.read(id_=pid, identity=identity).data.copy()
@@ -118,10 +120,10 @@ def update_records(input_file: TextIO):
                 pid=pid, identity=identity, new_data=record, old_data=old_data
             )
         except Exception as e:
-            click.secho(f"'{pid}', problem during update, {e}", fg="red")
+            secho(f"'{pid}', problem during update, {e}", fg="red")
             continue
 
-        click.secho(f"'{pid}', successfully updated", fg="green")
+        secho(f"'{pid}', successfully updated", fg="green")
 
 
 @rdmrecords.command("delete")
@@ -134,13 +136,13 @@ def delete_record(pid: str):
         invenio repository rdmrecords delete -p "fcze8-4vx33"
     """
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity(permission_name="system_process", role_name="admin")
     service = get_records_service()
     service.delete(id_=pid, identity=identity)
-    click.secho(f"'{pid}', soft-deleted", fg="green")
+    secho(f"'{pid}', soft-deleted", fg="green")
 
 
 @rdmrecords.command("delete-draft")
@@ -153,19 +155,19 @@ def delete_draft(pid: str):
         invenio repository rdmrecords delete-draft -p "fcze8-4vx33"
     """
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity(permission_name="system_process", role_name="admin")
 
     draft = get_draft(pid=pid, identity=identity)
     if draft is None:
-        click.secho(f"'{pid}', does not have a draft", fg="yellow")
+        secho(f"'{pid}', does not have a draft", fg="yellow")
         return
 
     service = get_records_service()
     service.delete_draft(id_=pid, identity=identity)
-    click.secho(f"'{pid}', deleted draft", fg="green")
+    secho(f"'{pid}', deleted draft", fg="green")
 
 
 @rdmrecords.group()
@@ -183,7 +185,7 @@ def list_pids(pid: str):
         invenio repository rdmrecords pids list -p <pid>
     """
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity()
@@ -192,13 +194,10 @@ def list_pids(pid: str):
     current_pids = record_data.get("pids", {}).items()
 
     if len(current_pids) == 0:
-        fg = "yellow"
-        click.secho("record does not have any pids", fg=fg)
+        secho("record does not have any pids", fg="yellow")
 
     for index, pid in enumerate(current_pids):
-        # BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, RESET
-        fg = "blue" if index % 2 == 0 else "cyan"
-        click.secho(json.dumps(pid, indent=2), fg=fg)
+        secho(json.dumps(pid, indent=2), fg=_COLORS[index % 2])
 
 
 @pids.command("replace")
@@ -216,12 +215,12 @@ def replace_pid(pid: str, pid_identifier: str):
     try:
         pid_identifier_json = json.loads(pid_identifier)
     except Exception as e:
-        click.secho(e.msg, fg="red")
-        click.secho(f"pid_identifier is not valid JSON", fg="red")
+        secho(e.msg, fg="red")
+        secho("pid_identifier is not valid JSON", fg="red")
         return
 
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity(permission_name="system_process", role_name="admin")
@@ -233,7 +232,7 @@ def replace_pid(pid: str, pid_identifier: str):
     pid_key = list(pid_identifier_json.keys())[0]
 
     if pids.get(pid_key, None) is None:
-        click.secho(f"'{pid}' does not have pid identifier '{pid_key}'", fg="yellow")
+        secho(f"'{pid}' does not have pid identifier '{pid_key}'", fg="yellow")
         return
 
     pids[pid_key] = pid_identifier_json.get(pid_key)
@@ -242,10 +241,10 @@ def replace_pid(pid: str, pid_identifier: str):
     try:
         update_record(pid=pid, identity=identity, new_data=new_data, old_data=old_data)
     except Exception as e:
-        click.secho(f"'{pid}', problem during update, {e}", fg="red")
+        secho(f"'{pid}', problem during update, {e}", fg="red")
         return
 
-    click.secho(f"'{pid}', successfully updated", fg="green")
+    secho(f"'{pid}', successfully updated", fg="green")
 
 
 @rdmrecords.group()
@@ -263,7 +262,7 @@ def list_identifiers(pid: str):
         invenio repository rdmrecords identifiers list -p <pid>
     """
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity()
@@ -272,13 +271,10 @@ def list_identifiers(pid: str):
     current_identifiers = record_data["metadata"].get("identifiers", [])
 
     if len(current_identifiers) == 0:
-        fg = "yellow"
-        click.secho("record does not have any identifiers", fg=fg)
+        secho("record does not have any identifiers", fg="yellow")
 
     for index, identifier in enumerate(current_identifiers):
-        # BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, RESET
-        fg = "blue" if index % 2 == 0 else "cyan"
-        click.secho(json.dumps(identifier, indent=2), fg=fg)
+        secho(json.dumps(identifier, indent=2), fg=_COLORS[index % 2])
 
 
 @identifiers.command("add")
@@ -295,12 +291,12 @@ def add_identifier(identifier: str, pid: str):
     try:
         identifier_json = json.loads(identifier)
     except Exception as e:
-        click.secho(e.msg, fg="red")
-        click.secho(f"identifier is not valid JSON", fg="red")
+        secho(e.msg, fg="red")
+        secho("identifier is not valid JSON", fg="red")
         return
 
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity("system_process", role_name="admin")
@@ -311,7 +307,7 @@ def add_identifier(identifier: str, pid: str):
     current_schemes = [_["scheme"] for _ in current_identifiers]
     scheme = identifier_json["scheme"]
     if scheme in current_schemes:
-        click.secho(f"scheme '{scheme}' already in identifiers", fg="red")
+        secho(f"scheme '{scheme}' already in identifiers", fg="red")
         return
 
     old_data = record_data.copy()
@@ -323,10 +319,10 @@ def add_identifier(identifier: str, pid: str):
             pid=pid, identity=identity, new_data=record_data, old_data=old_data
         )
     except Exception as e:
-        click.secho(f"'{pid}', Error during update, {e}", fg="red")
+        secho(f"'{pid}', Error during update, {e}", fg="red")
         return
 
-    click.secho(f"Identifier for '{pid}' added.", fg="green")
+    secho(f"Identifier for '{pid}' added.", fg="green")
     return
 
 
@@ -344,12 +340,12 @@ def replace_identifier(identifier: str, pid: str):
     try:
         identifier_json = json.loads(identifier)
     except Exception as e:
-        click.secho(e.msg, fg="red")
-        click.secho(f"identifier is not valid JSON", fg="red")
+        secho(e.msg, fg="red")
+        secho("identifier is not valid JSON", fg="red")
         return
 
     if not record_exists(pid):
-        click.secho(f"'{pid}', does not exist or is deleted", fg="red")
+        secho(f"'{pid}', does not exist or is deleted", fg="red")
         return
 
     identity = get_identity("system_process", role_name="admin")
@@ -365,7 +361,7 @@ def replace_identifier(identifier: str, pid: str):
             break
 
     if not replaced:
-        click.secho(f"scheme '{scheme}' not in identifiers", fg="red")
+        secho(f"scheme '{scheme}' not in identifiers", fg="red")
         return
 
     old_data = record_data.copy()
@@ -376,10 +372,10 @@ def replace_identifier(identifier: str, pid: str):
             pid=pid, identity=identity, new_data=record_data, old_data=old_data
         )
     except Exception as e:
-        click.secho(f"'{pid}', problem during update, {e}", fg="red")
+        secho(f"'{pid}', problem during update, {e}", fg="red")
         return
 
-    click.secho(f"Identifier for '{pid}' replaced.", fg="green")
+    secho(f"Identifier for '{pid}' replaced.", fg="green")
 
 
 @rdmrecords.command("add_file")
@@ -397,10 +393,8 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
     try:
         record = service.read(identity=identity, id_=recid)._record
     except PIDDoesNotExistError as e:
-        click.secho(
-            "Record with type '{pid_type}' and id '{pid_value}' does not exist.".format(
-                pid_type=e.pid_type, pid_value=e.pid_value
-            ),
+        secho(
+            f"Record with type '{e.pid_type}' and id '{e.pid_value}' does not exist.",
             fg="red",
         )
         return
@@ -408,27 +402,23 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
     files = record.files
     bucket = files.bucket
 
-    key = os.path.basename(fp.name)
+    filename = os.path.basename(fp.name)
     obj = None
     try:
-        obj = files[key]
-    except Exception as e:
-        click.echo("File does not yet exist.")
+        obj = files[filename]
+    except KeyError:
+        secho("File does not yet exist.", fg="black")
 
     if obj is not None and not replace_existing:
-        click.secho(
-            'File with key "{key}" already exists.'
-            " Use `--replace-existing/-f` to overwrite it.".format(
-                key=key, recid=recid
-            ),
+        secho(
+            f"File with filename '{filename}' already exists. Use `--replace-existing/-f` to overwrite it.",
             fg="red",
         )
         return
 
     if not files.enabled and not enable_files:
-        click.secho(
-            "Files are not enabled for this record (metadata-only)."
-            "  Use `--enable-files` to add it anyway.",
+        secho(
+            "Files are not enabled for this record (metadata-only). Use `--enable-files` to add it anyway.",
             fg="red",
         )
         return
@@ -437,33 +427,21 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
     size = fp.tell()
     fp.seek(SEEK_SET)
 
-    click.echo("Will add the following file:\n")
-    click.secho(
-        '  key: "{key}"\n'
-        "  bucket: {bucket}\n"
-        "  size: {size}\n"
-        "".format(key=key, bucket=bucket.id, size=size),
-        fg="green",
-    )
-    click.echo("to record:\n")
-    click.secho(
-        '  Title: "{title}"\n'
-        "  ID   : {recid}\n"
-        "  UUID : {uuid}\n"
-        "".format(
-            recid=record["id"],
-            title=record.get("metadata", {}).get("title"),
-            uuid=record.id,
-            fg="green",
-        )
-    )
+    title = record.get("metadata", {}).get("title")
+    messages = {
+        "Will add the following file:": "black",
+        f"  filename: {filename}\n  bucket: {bucket}\n  size: {size}": "green",
+        "to record:": "black",
+        f"  Title: {title}\n  ID: {record['id']}\n  UUID: {record.id}": "green",
+    }
+
+    for message, color in messages.items():
+        secho(message, fg=color)
+
     if replace_existing and obj is not None:
-        click.echo("and remove the file:\n")
-        click.secho(
-            '  key: "{key}"\n'
-            "  bucket: {bucket}\n"
-            "  size: {size}\n"
-            "".format(key=obj.key, bucket=bucket, size=obj.file.size),
+        secho("and remove the file:\n", fg="black")
+        secho(
+            f"  filename: {obj.key}\n  bucket: {bucket}\n  size: {obj.file.size}",
             fg="green",
         )
 
@@ -472,11 +450,11 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
         files.unlock()
         if obj is not None and replace_existing:
             files.delete(obj.key)
-        files.create(key, stream=fp)
+        files.create(filename, stream=fp)
         files.lock()
 
         record.commit()
         db.session.commit()
-        click.secho("File added successfully.", fg="green")
+        secho("File added successfully.", fg="green")
     else:
-        click.secho("File addition aborted.", fg="green")
+        secho("File addition aborted.", fg="magenta")

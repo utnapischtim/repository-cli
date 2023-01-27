@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Graz University of Technology.
+# Copyright (C) 2021-2023 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -15,7 +15,6 @@ from invenio_accounts.models import User
 @click.group()
 def users():
     """Management commands for users."""
-    pass
 
 
 @users.command("list")
@@ -29,7 +28,5 @@ def list_users():
     users = User.query
 
     for user in users:
-        line = "{} {}".format(user.id, user.email)
-
         fg = "green" if user.active else "red"
-        click.secho(line, fg=fg)
+        click.secho(f"user: {user.id}, email: {user.email}", fg=fg)
