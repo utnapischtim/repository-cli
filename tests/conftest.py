@@ -13,102 +13,54 @@ fixtures are available.
 
 import os
 import shutil
-import tempfile
 
 import pytest
 from faker import Faker
-from flask import Flask
-from flask_babelex import Babel
 from flask_principal import Identity
 from invenio_access.cli import allow_action
-from invenio_access.permissions import any_user, system_identity, system_process
+from invenio_access.permissions import system_identity, system_process
 from invenio_accounts.cli import roles_create
-from invenio_app.factory import create_app as create_rdm_app
+from invenio_app.factory import create_api as _create_api
 from invenio_db import db
 from invenio_files_rest.models import Location
 from invenio_rdm_records.cli import create_fake_record
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_vocabularies.proxies import current_service as vocabulary_service
 from invenio_vocabularies.records.api import Vocabulary
-from sqlalchemy_utils.functions import create_database, database_exists, drop_database
-
-from repository_cli import RepositoryCli
 
 
 @pytest.fixture(scope="module")
-def celery_config():
-    """Override pytest-invenio fixture.
-
-    TODO: Remove this fixture if you add Celery support.
-    """
-    return {}
-
-
-@pytest.fixture(scope="module")
-def create_app(instance_path):
-    """Application factory fixture."""
-
-    def factory(**config):
-        app = Flask("testapp", instance_path=instance_path)
-        app.config.update(**config)
-        Babel(app)
-        RepositoryCli(app)
-        app.register_blueprint(blueprint)
-        return app
-
-    return factory
-
-
-@pytest.fixture(scope="module")
-def app(request):
-    """Basic Flask application."""
-    instance_path = tempfile.mkdtemp()
-    app = create_rdm_app()
-    DB = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite://")
-    app.config.update(
-        I18N_LANGUAGES=[("en", "English"), ("de", "German")],
-        SQLALCHEMY_DATABASE_URI=DB,
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        DATADIR="data",
-    )
-
-    RepositoryCli(app)
-
-    app.config[
+def app_config(app_config):
+    """Mimic an instance's configuration."""
+    app_config["JSONSCHEMAS_HOST"] = "no-use"
+    app_config["BABEL_DEFAULT_LOCALE"] = "en"
+    app_config["I18N_LANGUAGES"] = [("en", "English"), ("de", "German")]
+    app_config[
         "RECORDS_REFRESOLVER_CLS"
     ] = "invenio_records.resolver.InvenioRefResolver"
-    app.config[
+    app_config[
         "RECORDS_REFRESOLVER_STORE"
     ] = "invenio_jsonschemas.proxies.current_refresolver_store"
 
-    # Variable not used. We set it to silent warnings
-    app.config["JSONSCHEMAS_HOST"] = "not-used"
+    app_config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "SQLALCHEMY_DATABASE_URI", "sqlite://"
+    )
+    app_config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app_config["DATADIR"] = "data"
 
-    with app.app_context():
-        db_url = str(db.engine.url)
-        if db_url != "sqlite://" and not database_exists(db_url):
-            create_database(db_url)
-        db.create_all()
+    return app_config
 
-    def teardown():
-        with app.app_context():
-            db_url = str(db.engine.url)
-            db.session.close()
-            if db_url != "sqlite://":
-                drop_database(db_url)
-            shutil.rmtree(instance_path)
 
-    request.addfinalizer(teardown)
-    app.test_request_context().push()
-
-    return app
+@pytest.fixture(scope="module")
+def create_app(instance_path, entry_points):
+    """Application factory fixture."""
+    return _create_api
 
 
 @pytest.fixture(scope="module")
 def app_initialized(app, resource_type_item):
     """Flask application with data added."""
-    d = app.config["DATADIR"]  # folder `data`
-
+    d = app.config["DATADIR"]
     if os.path.exists(d):
         shutil.rmtree(d)
         os.makedirs(d)
@@ -218,6 +170,7 @@ def pid_identifier():
     pid_identifier = {
         "doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}
     }
+
     return pid_identifier
 
 
@@ -227,7 +180,7 @@ def resource_type_type(app):
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L398
     """
-    return vocabulary_service.create_type(system_identity, "resource_types", "rsrct")
+    return vocabulary_service.create_type(system_identity, "resourcetypes", "rsrct")
 
 
 @pytest.fixture(scope="module")
@@ -240,21 +193,21 @@ def resource_type_item(app, resource_type_type):
         system_identity,
         {
             "id": "image-photo",
+            "icon": "chart bar outline",
             "props": {
                 "csl": "graphic",
                 "datacite_general": "Image",
                 "datacite_type": "Photo",
+                "eurepo": "info:eu-repo/semantic/image-photo",
                 "openaire_resourceType": "25",
                 "openaire_type": "dataset",
                 "schema.org": "https://schema.org/Photograph",
                 "subtype": "image-photo",
-                "subtype_name": "Photo",
                 "type": "image",
-                "type_icon": "chart bar outline",
-                "type_name": "Image",
             },
             "title": {"en": "Photo"},
-            "type": "resource_types",
+            "tags": ["depositable", "linkable"],
+            "type": "resourcetypes",
         },
     )
 

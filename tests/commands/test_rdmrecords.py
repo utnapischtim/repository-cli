@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Graz University of Technology.
+# Copyright (C) 2021-2023 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -11,14 +11,8 @@ See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
 
-import json
 import os
 
-import pytest
-from flask import Flask
-from flask_babelex import Babel
-
-from repository_cli import RepositoryCli
 from repository_cli.cli.records import (
     count_records,
     delete_draft,

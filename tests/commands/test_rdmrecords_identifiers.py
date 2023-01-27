@@ -13,11 +13,6 @@ fixtures are available.
 
 import json
 
-import pytest
-from flask import Flask
-from flask_babelex import Babel
-
-from repository_cli import RepositoryCli
 from repository_cli.cli.records import (
     add_identifier,
     list_identifiers,
