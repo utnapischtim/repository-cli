@@ -7,6 +7,16 @@
 Changes
 =======
 
+Version v0.3.0 (release 2023-01-31)
+
+- improve: add explicit raised RuntimeError
+- record: add parameters to list_records
+- users: change to table output
+- refactor: add Color class
+- refactor
+- fix: tests
+
+
 Version v0.2.0 (release 2023-01-20)
 
 - add files enabled check
