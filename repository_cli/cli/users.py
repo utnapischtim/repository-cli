@@ -10,6 +10,7 @@
 import click
 from flask.cli import with_appcontext
 from invenio_accounts.models import User
+from tabulate import tabulate
 
 
 @click.group()
@@ -25,8 +26,11 @@ def list_users():
     example call:
         invenio repository users list
     """
-    users = User.query
+    users = []
 
-    for user in users:
-        fg = "green" if user.active else "red"
-        click.secho(f"user: {user.id}, email: {user.email}", fg=fg)
+    for user in User.query:
+        active = "YES" if user.active else "NO"
+
+        users.append([user.id, user.email, active, user.confirmed_at])
+
+    print(tabulate(users, headers=["id", "email", "active", "confirmed"]))
