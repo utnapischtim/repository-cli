@@ -13,6 +13,7 @@ from io import SEEK_END, SEEK_SET
 from typing import TextIO
 
 import click
+import jq
 from click import secho
 from flask.cli import with_appcontext
 from invenio_db import db
@@ -30,6 +31,7 @@ from .click_options import (
 from .util import (
     get_draft,
     get_identity,
+    get_metadata_model,
     get_records_service,
     record_exists,
     update_record,
@@ -56,35 +58,62 @@ def count_records():
 
 @rdmrecords.command("list")
 @option_output_file()
+@click.option("--data-model", type=click.Choice(["rdm", "marc21"]), default="rdm")
+@click.option("--quiet", is_flag=True, default=False, type=click.BOOL)
+@click.option(
+    "--jq-filter", default=".", type=click.STRING, required=False, help="filter for jq"
+)
+@click.option(
+    "--record-type",
+    type=click.Choice(["record", "draft"], case_sensitive=True),
+    default="record",
+)
 @with_appcontext
-def list_records(output_file: TextIO):
+def list_records(
+    output_file: TextIO, data_model: str, quiet: bool, jq_filter: str, record_type: str
+):
     """List record's.
 
     example call:
         invenio repository rdmrecords list [--of out.json]
+        invenio repository rdmrecords list --record-type draft \
+                                           --data-model marc21 \
+                                           --output-file /dev/stdout \
+                                           --quiet \
+                                           --jq-filter '.pids.doi.identifier'
     """
-    records = RDMRecordMetadata.query.filter_by(is_deleted=False)
+    model = get_metadata_model(data_model, record_type)
+    records = model.query.filter_by(is_deleted=False)
+
     if output_file:
         output_file.write("[")
 
     num_records = records.count()
 
+    jq_compiled_filter = jq.compile(jq_filter)
+
     # rather iterate and write one record at time instead of converting to list
     # (might take up much memory)
     for index, metadata in enumerate(records):
+        output = jq_compiled_filter.input(metadata.json).first()
+
         if output_file:
-            json.dump(metadata.json, output_file, indent=2)
+            json.dump(output, output_file, indent=2)
             if index < (num_records - 1):
                 output_file.write(",\n")
         else:
-            secho(json.dumps(metadata.json, indent=2), fg=Color.alternate[index % 2])
+            secho(json.dumps(output, indent=2), fg=Color.alternate[index % 2])
 
     if output_file:
         output_file.write("]")
+        output_file.flush()
 
-        secho(f"wrote {num_records} records to {output_file.name}", fg=Color.success)
+        output_msg = f"wrote {num_records} records to {output_file.name}"
     else:
-        secho(f"{num_records} records", fg=Color.success)
+        output_msg = f"{num_records} records"
+
+    if not quiet:
+        secho(output_msg, fg=Color.success)
 
 
 @rdmrecords.command("update")

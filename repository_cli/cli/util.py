@@ -11,9 +11,13 @@ from typing import Optional
 from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
+from invenio_db import db
 from invenio_drafts_resources.records.api import Draft
 from invenio_rdm_records.proxies import current_rdm_records
+from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
 from invenio_records_marc21 import current_records_marc21
+from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
+from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
 from invenio_records_resources.services import RecordService
 
 
@@ -65,6 +69,23 @@ def get_records_service(data_model="rdm") -> RecordService:
     }
 
     return available_services.get(data_model, current_rdm_records.records_service)
+
+
+def get_metadata_model(
+    data_model: str = "rdm", record_type: str = "record"
+) -> db.Model:
+    """Get the record model."""
+    available_models = {
+        "record": {
+            "rdm": RDMRecordMetadata,
+            "marc21": Marc21RecordMetadata,
+        },
+        "draft": {
+            "rdm": RDMDraftMetadata,
+            "marc21": Marc21DraftMetadata,
+        },
+    }
+    return available_models.get(record_type).get(data_model)
 
 
 def update_record(pid: str, identity: Identity, new_data, old_data) -> None:
