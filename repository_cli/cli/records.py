@@ -105,7 +105,7 @@ def list_records(
             secho(json.dumps(output, indent=2), fg=Color.alternate[index % 2])
 
     if output_file:
-        output_file.write("]")
+        output_file.write("]\n")
         output_file.flush()
 
         output_msg = f"wrote {num_records} records to {output_file.name}"

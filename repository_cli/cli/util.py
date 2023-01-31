@@ -85,7 +85,16 @@ def get_metadata_model(
             "marc21": Marc21DraftMetadata,
         },
     }
-    return available_models.get(record_type).get(data_model)
+
+    try:
+        _type = available_models.get(record_type)
+    except KeyError:
+        raise RuntimeError("the used record_type should be of the list [record, draft]")
+
+    try:
+        return _type.get(data_model)
+    except KeyError:
+        raise RuntimeError("the used data_model should be of the list [rdm, marc21]")
 
 
 def update_record(pid: str, identity: Identity, new_data, old_data) -> None:
