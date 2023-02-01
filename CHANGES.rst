@@ -7,6 +7,11 @@
 Changes
 =======
 
+Version v0.3.1 (release 2023-02-01)
+
+- setup: move jq and tabulate to install require
+
+
 Version v0.3.0 (release 2023-01-31)
 
 - improve: add explicit raised RuntimeError
