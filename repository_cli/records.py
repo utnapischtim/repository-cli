@@ -20,7 +20,6 @@ from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_rdm_records.records.models import RDMRecordMetadata
 
-from ..types import Color
 from .click_options import (
     option_identifier,
     option_input_file,
@@ -28,7 +27,8 @@ from .click_options import (
     option_pid,
     option_pid_identifier,
 )
-from .util import (
+from .types import Color
+from .utils import (
     get_draft,
     get_identity,
     get_metadata_model,
@@ -39,24 +39,24 @@ from .util import (
 
 
 @click.group()
-def rdmrecords():
+def records():
     """Management commands for records."""
 
 
-@rdmrecords.command("count")
+@records.command("count")
 @with_appcontext
 def count_records():
     """Count number of record's.
 
     example call:
-        invenio repository rdmrecords count
+        invenio repository records count
     """
     records = RDMRecordMetadata.query.filter_by(is_deleted=False)
     num_records = records.count()
     secho(f"{num_records} records", fg=Color.success)
 
 
-@rdmrecords.command("list")
+@records.command("list")
 @option_output_file()
 @click.option("--data-model", type=click.Choice(["rdm", "marc21"]), default="rdm")
 @click.option("--quiet", is_flag=True, default=False, type=click.BOOL)
@@ -75,8 +75,8 @@ def list_records(
     """List record's.
 
     example call:
-        invenio repository rdmrecords list [--of out.json]
-        invenio repository rdmrecords list --record-type draft \
+        invenio repository records list [--of out.json]
+        invenio repository records list --record-type draft \
                                            --data-model marc21 \
                                            --output-file /dev/stdout \
                                            --quiet \
@@ -116,14 +116,14 @@ def list_records(
         secho(output_msg, fg=Color.success)
 
 
-@rdmrecords.command("update")
+@records.command("update")
 @option_input_file(required=True)
 @with_appcontext
 def update_records(input_file: TextIO):
     """Update records specified in input file.
 
     example call:
-        invenio repository rdmrecords update --if in.json
+        invenio repository records update --if in.json
     """
     try:
         records = json.load(input_file)
@@ -154,14 +154,14 @@ def update_records(input_file: TextIO):
         secho(f"'{pid}', successfully updated", fg=Color.success)
 
 
-@rdmrecords.command("delete")
+@records.command("delete")
 @option_pid(required=True)
 @with_appcontext
 def delete_record(pid: str):
     """Delete record.
 
     example call:
-        invenio repository rdmrecords delete -p "fcze8-4vx33"
+        invenio repository records delete -p "fcze8-4vx33"
     """
     if not record_exists(pid):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
@@ -173,14 +173,14 @@ def delete_record(pid: str):
     secho(f"'{pid}', soft-deleted", fg=Color.success)
 
 
-@rdmrecords.command("delete-draft")
+@records.command("delete-draft")
 @option_pid(required=True)
 @with_appcontext
 def delete_draft(pid: str):
     """Delete draft.
 
     example call:
-        invenio repository rdmrecords delete-draft -p "fcze8-4vx33"
+        invenio repository records delete-draft -p "fcze8-4vx33"
     """
     if not record_exists(pid):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
@@ -198,7 +198,7 @@ def delete_draft(pid: str):
     secho(f"'{pid}', deleted draft", fg=Color.success)
 
 
-@rdmrecords.group()
+@records.group()
 def pids():
     """Management commands for record pids."""
 
@@ -210,7 +210,7 @@ def list_pids(pid: str):
     """List record's pids.
 
     example call:
-        invenio repository rdmrecords pids list -p <pid>
+        invenio repository records pids list -p <pid>
     """
     if not record_exists(pid):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
@@ -236,7 +236,7 @@ def replace_pid(pid: str, pid_identifier: str):
     """Update pid doi to unmanaged.
 
     example call:
-        invenio repository rdmrecords pids replace -p "fcze8-4vx33"
+        invenio repository records pids replace -p "fcze8-4vx33"
         --pid-identifier ' { "doi": {
         "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }}'
     """
@@ -275,7 +275,7 @@ def replace_pid(pid: str, pid_identifier: str):
     secho(f"'{pid}', successfully updated", fg=Color.success)
 
 
-@rdmrecords.group()
+@records.group()
 def identifiers():
     """Management commands for record identifiers."""
 
@@ -287,7 +287,7 @@ def list_identifiers(pid: str):
     """List record's identifiers.
 
     example call:
-        invenio repository rdmrecords identifiers list -p <pid>
+        invenio repository records identifiers list -p <pid>
     """
     if not record_exists(pid):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
@@ -313,7 +313,7 @@ def add_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
 
     example call:
-        invenio repository rdmrecords identifiers add -p "fcze8-4vx33"
+        invenio repository records identifiers add -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
     try:
@@ -362,7 +362,7 @@ def replace_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
 
     example call:
-        invenio repository rdmrecords identifiers replace -p "fcze8-4vx33"
+        invenio repository records identifiers replace -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
     try:
@@ -406,7 +406,7 @@ def replace_identifier(identifier: str, pid: str):
     secho(f"Identifier for '{pid}' replaced.", fg=Color.success)
 
 
-@rdmrecords.command("add_file")
+@records.command("add_file")
 @click.argument("recid", type=str)
 @click.argument("fp", type=click.File("rb"))
 @click.option("--replace-existing", "-f", is_flag=True, default=False)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Graz University of Technology.
+# Copyright (C) 2021-2023 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -13,7 +13,7 @@ fixtures are available.
 
 import json
 
-from repository_cli.cli.records import list_pids, replace_pid
+from repository_cli.records import list_pids, replace_pid
 
 
 def test_list_pids_with_entries(app_initialized, create_record):

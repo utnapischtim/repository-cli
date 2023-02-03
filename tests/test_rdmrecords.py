@@ -13,19 +13,19 @@ fixtures are available.
 
 import os
 
-from repository_cli.cli.records import (
+from repository_cli.records import (
     count_records,
     delete_draft,
     delete_record,
     list_records,
-    rdmrecords,
+    records,
     update_records,
 )
 
 
 def test_base_command(app):
     runner = app.test_cli_runner()
-    response = runner.invoke(rdmrecords)
+    response = runner.invoke(records)
     assert response.exit_code == 0
 
 
