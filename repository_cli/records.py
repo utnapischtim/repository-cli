@@ -97,6 +97,9 @@ def list_records(
     for index, metadata in enumerate(records):
         output = jq_compiled_filter.input(metadata.json).first()
 
+        if not output:
+            continue
+
         if output_file:
             json.dump(output, output_file, indent=2)
             if index < (num_records - 1):
