@@ -110,9 +110,9 @@ def update_record(pid: str, identity: Identity, new_data, old_data) -> None:
     try:
         service.update_draft(id_=pid, identity=identity, data=new_data)
         service.publish(id_=pid, identity=identity)
-    except Exception as e:
+    except Exception as error:
         service.update_draft(id_=pid, identity=identity, data=old_data)
-        raise e
+        raise error
 
 
 def record_exists(pid: str) -> bool:

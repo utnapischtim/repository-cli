@@ -7,6 +7,7 @@
 
 """Commonly used options for CLI commands."""
 
+
 import click
 
 
@@ -49,9 +50,11 @@ def option_record_type():
     )
 
 
-# -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
-def option_identifier(required: bool = False):
-    """Get parameter options for metadata identifier."""
+def option_identifier(required: bool = True):
+    """Get parameter options for metadata identifier.
+
+    Sample use: --identifier '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
+    """
     return click.option(
         "--identifier",
         "-i",
@@ -60,11 +63,11 @@ def option_identifier(required: bool = False):
     )
 
 
-# --pid-identifier ' { "doi":
-#   { "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }
-# }'
-def option_pid_identifier(required: bool = False):
-    """Get parameter options for metadata identifier."""
+def option_pid_identifier(required: bool = True):
+    """Get parameter options for metadata identifier.
+
+    Sample use: --pid-identifier '{"doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}}'
+    """
     return click.option(
         "--pid-identifier",
         "--pid-identifier",
@@ -74,9 +77,11 @@ def option_pid_identifier(required: bool = False):
     )
 
 
-# -p "fcze8-4vx33"
-def option_pid(required: bool = False):
-    """Get parameter options for record PID."""
+def option_pid(required: bool = True):
+    """Get parameter options for record PID.
+
+    Sample use: --pid "fcze8-4vx33"
+    """
     return click.option(
         "--pid",
         "-p",
@@ -86,9 +91,11 @@ def option_pid(required: bool = False):
     )
 
 
-# --if "input.json"
-def option_input_file(required: bool = False):
-    """Get parameter options for input file."""
+def option_input_file(required: bool = True, type_=click.File("r")):
+    """Get parameter options for input file.
+
+    Sample use: --input-file "input.json"
+    """
     return click.option(
         "--input-file",
         "--if",
@@ -96,13 +103,15 @@ def option_input_file(required: bool = False):
         metavar="string",
         required=required,
         help="name of file to read from",
-        type=click.File("r"),
+        type=type_,
     )
 
 
-# --of "output.json"
-def option_output_file(required: bool = False):
-    """Get parameter options for output file."""
+def option_output_file(required: bool = True):
+    """Get parameter options for output file.
+
+    Sample use: --output-file "output.json"
+    """
     return click.option(
         "--output-file",
         "--of",

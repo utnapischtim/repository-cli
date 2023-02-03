@@ -47,8 +47,8 @@ def records():
 
 
 @records.command("count")
-@option_data_model
-@option_record_type
+@option_data_model()
+@option_record_type()
 @with_appcontext
 def count_records(data_model, record_type):
     """Count number of record's.
@@ -64,10 +64,10 @@ def count_records(data_model, record_type):
 
 @records.command("list")
 @option_output_file()
-@option_data_model
-@option_quiet
-@option_jq_filter
-@option_record_type
+@option_data_model()
+@option_quiet()
+@option_jq_filter()
+@option_record_type()
 @with_appcontext
 def list_records(
     output_file: TextIO, data_model: str, quiet: bool, jq_filter: str, record_type: str
@@ -117,7 +117,7 @@ def list_records(
 
 
 @records.command("update")
-@option_input_file(required=True)
+@option_input_file()
 @with_appcontext
 def update_records(input_file: TextIO):
     """Update records specified in input file.
@@ -147,15 +147,15 @@ def update_records(input_file: TextIO):
             update_record(
                 pid=pid, identity=identity, new_data=record, old_data=old_data
             )
-        except Exception as e:
-            secho(f"'{pid}', problem during update, {e}", fg=Color.error)
+        except Exception as error:
+            secho(f"'{pid}', problem during update, {error}", fg=Color.error)
             continue
 
         secho(f"'{pid}', successfully updated", fg=Color.success)
 
 
 @records.command("delete")
-@option_pid(required=True)
+@option_pid()
 @with_appcontext
 def delete_record(pid: str):
     """Delete record.
@@ -174,7 +174,7 @@ def delete_record(pid: str):
 
 
 @records.command("delete-draft")
-@option_pid(required=True)
+@option_pid()
 @with_appcontext
 def delete_draft(pid: str):
     """Delete draft.
@@ -204,7 +204,7 @@ def pids():
 
 
 @pids.command("list")
-@option_pid(required=True)
+@option_pid()
 @with_appcontext
 def list_pids(pid: str):
     """List record's pids.
@@ -229,8 +229,8 @@ def list_pids(pid: str):
 
 
 @pids.command("replace")
-@option_pid(required=True)
-@option_pid_identifier(required=True)
+@option_pid()
+@option_pid_identifier()
 @with_appcontext
 def replace_pid(pid: str, pid_identifier: str):
     """Update pid doi to unmanaged.
@@ -242,8 +242,8 @@ def replace_pid(pid: str, pid_identifier: str):
     """
     try:
         pid_identifier_json = json.loads(pid_identifier)
-    except Exception as e:
-        secho(e.msg, fg=Color.error)
+    except Exception as error:
+        secho(error.msg, fg=Color.error)
         secho("pid_identifier is not valid JSON", fg=Color.error)
         return
 
@@ -268,8 +268,8 @@ def replace_pid(pid: str, pid_identifier: str):
 
     try:
         update_record(pid=pid, identity=identity, new_data=new_data, old_data=old_data)
-    except Exception as e:
-        secho(f"'{pid}', problem during update, {e}", fg=Color.error)
+    except Exception as error:
+        secho(f"'{pid}', problem during update, {error}", fg=Color.error)
         return
 
     secho(f"'{pid}', successfully updated", fg=Color.success)
@@ -281,7 +281,7 @@ def identifiers():
 
 
 @identifiers.command("list")
-@option_pid(required=option_pid)
+@option_pid()
 @with_appcontext
 def list_identifiers(pid: str):
     """List record's identifiers.
@@ -306,8 +306,8 @@ def list_identifiers(pid: str):
 
 
 @identifiers.command("add")
-@option_identifier(required=True)
-@option_pid(required=True)
+@option_identifier()
+@option_pid()
 @with_appcontext
 def add_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
@@ -346,8 +346,8 @@ def add_identifier(identifier: str, pid: str):
         update_record(
             pid=pid, identity=identity, new_data=record_data, old_data=old_data
         )
-    except Exception as e:
-        secho(f"'{pid}', Error during update, {e}", fg=Color.error)
+    except Exception as error:
+        secho(f"'{pid}', Error during update, {error}", fg=Color.error)
         return
 
     secho(f"Identifier for '{pid}' added.", fg=Color.success)
@@ -355,8 +355,8 @@ def add_identifier(identifier: str, pid: str):
 
 
 @identifiers.command("replace")
-@option_identifier(required=True)
-@option_pid(required=True)
+@option_identifier()
+@option_pid()
 @with_appcontext
 def replace_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
@@ -367,8 +367,8 @@ def replace_identifier(identifier: str, pid: str):
     """
     try:
         identifier_json = json.loads(identifier)
-    except Exception as e:
-        secho(e.msg, fg=Color.error)
+    except Exception as error:
+        secho(error.msg, fg=Color.error)
         secho("identifier is not valid JSON", fg=Color.error)
         return
 
@@ -399,30 +399,30 @@ def replace_identifier(identifier: str, pid: str):
         update_record(
             pid=pid, identity=identity, new_data=record_data, old_data=old_data
         )
-    except Exception as e:
-        secho(f"'{pid}', problem during update, {e}", fg=Color.error)
+    except Exception as error:
+        secho(f"'{pid}', problem during update, {error}", fg=Color.error)
         return
 
     secho(f"Identifier for '{pid}' replaced.", fg=Color.success)
 
 
 @records.command("add_file")
-@click.argument("recid", type=str)
-@click.argument("fp", type=click.File("rb"))
+@option_pid()
+@option_data_model()
+@option_input_file(type_=click.File("rb"))
 @click.option("--replace-existing", "-f", is_flag=True, default=False)
-@click.option("--data-model", default="rdm")
 @click.option("--enable-files", is_flag=True, default=False)
 @with_appcontext
-def add_file(recid, fp, replace_existing, data_model, enable_files):
+def add_file(pid, input_file, replace_existing, data_model, enable_files):
     """Add a new file to a published record."""
     identity = get_identity("system_process", role_name="admin")
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=recid)._record
-    except PIDDoesNotExistError as e:
+        record = service.read(identity=identity, id_=pid)._record
+    except PIDDoesNotExistError as error:
         secho(
-            f"Record with type '{e.pid_type}' and id '{e.pid_value}' does not exist.",
+            f"Record with type '{error.pid_type}' and id '{error.pid_value}' does not exist.",
             fg=Color.error,
         )
         return
@@ -430,7 +430,7 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
     files = record.files
     bucket = files.bucket
 
-    filename = os.path.basename(fp.name)
+    filename = os.path.basename(input_file.name)
     obj = None
     try:
         obj = files[filename]
@@ -451,9 +451,9 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
         )
         return
 
-    fp.seek(SEEK_SET, SEEK_END)
-    size = fp.tell()
-    fp.seek(SEEK_SET)
+    input_file.seek(SEEK_SET, SEEK_END)
+    size = input_file.tell()
+    input_file.seek(SEEK_SET)
 
     title = record.get("metadata", {}).get("title")
     messages = {
@@ -478,7 +478,7 @@ def add_file(recid, fp, replace_existing, data_model, enable_files):
         files.unlock()
         if obj is not None and replace_existing:
             files.delete(obj.key)
-        files.create(filename, stream=fp)
+        files.create(filename, stream=input_file)
         files.lock()
 
         record.commit()
