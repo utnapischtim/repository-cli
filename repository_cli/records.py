@@ -63,7 +63,7 @@ def count_records(data_model, record_type):
 
 
 @records.command("list")
-@option_output_file()
+@option_output_file(required=False)
 @option_data_model()
 @option_quiet()
 @option_jq_filter()
