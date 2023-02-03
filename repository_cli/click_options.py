@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Graz University of Technology.
+# Copyright (C) 2021-2023 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -8,6 +8,45 @@
 """Commonly used options for CLI commands."""
 
 import click
+
+
+def option_quiet():
+    """Get parameter option for quiet."""
+    return click.option(
+        "--quiet",
+        is_flag=True,
+        default=False,
+        type=click.BOOL,
+    )
+
+
+def option_jq_filter():
+    """Get parameter option for jq filter."""
+    return click.option(
+        "--jq-filter",
+        default=".",
+        type=click.STRING,
+        required=False,
+        help="filter for jq",
+    )
+
+
+def option_data_model():
+    """Get parameter option for data model."""
+    return click.option(
+        "--data-model",
+        type=click.Choice(["rdm", "marc21"]),
+        default="rdm",
+    )
+
+
+def option_record_type():
+    """Get parameter option for record type."""
+    return click.option(
+        "--record-type",
+        type=click.Choice(["record", "draft"], case_sensitive=True),
+        default="record",
+    )
 
 
 # -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'

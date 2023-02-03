@@ -18,14 +18,17 @@ from click import secho
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_rdm_records.records.models import RDMRecordMetadata
 
 from .click_options import (
+    option_data_model,
     option_identifier,
     option_input_file,
+    option_jq_filter,
     option_output_file,
     option_pid,
     option_pid_identifier,
+    option_quiet,
+    option_record_type,
 )
 from .types import Color
 from .utils import (
@@ -44,30 +47,27 @@ def records():
 
 
 @records.command("count")
+@option_data_model
+@option_record_type
 @with_appcontext
-def count_records():
+def count_records(data_model, record_type):
     """Count number of record's.
 
     example call:
         invenio repository records count
     """
-    records = RDMRecordMetadata.query.filter_by(is_deleted=False)
+    model = get_metadata_model(data_model, record_type)
+    records = model.query.filter_by(is_deleted=False)
     num_records = records.count()
     secho(f"{num_records} records", fg=Color.success)
 
 
 @records.command("list")
 @option_output_file()
-@click.option("--data-model", type=click.Choice(["rdm", "marc21"]), default="rdm")
-@click.option("--quiet", is_flag=True, default=False, type=click.BOOL)
-@click.option(
-    "--jq-filter", default=".", type=click.STRING, required=False, help="filter for jq"
-)
-@click.option(
-    "--record-type",
-    type=click.Choice(["record", "draft"], case_sensitive=True),
-    default="record",
-)
+@option_data_model
+@option_quiet
+@option_jq_filter
+@option_record_type
 @with_appcontext
 def list_records(
     output_file: TextIO, data_model: str, quiet: bool, jq_filter: str, record_type: str
