@@ -75,7 +75,7 @@ def list_records(
     """List record's.
 
     example call:
-        invenio repository records list [--of out.json]
+        invenio repository records list [--output-file out.json]
         invenio repository records list --record-type draft \
                                            --data-model marc21 \
                                            --output-file /dev/stdout \
@@ -126,7 +126,7 @@ def update_records(input_file: TextIO):
     """Update records specified in input file.
 
     example call:
-        invenio repository records update --if in.json
+        invenio repository records update --input-file in.json
     """
     try:
         records = json.load(input_file)

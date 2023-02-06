@@ -63,6 +63,7 @@ def option_identifier(required: bool = True):
     )
 
 
+# TODO. rename to option_pid
 def option_pid_identifier(required: bool = True):
     """Get parameter options for metadata identifier.
 
@@ -70,13 +71,12 @@ def option_pid_identifier(required: bool = True):
     """
     return click.option(
         "--pid-identifier",
-        "--pid-identifier",
-        "pid_identifier",
         required=required,
         help="pid identifier as JSON",
     )
 
 
+# TODO: rename to option_id, refactore to true concept of the used id
 def option_pid(required: bool = True):
     """Get parameter options for record PID.
 
@@ -98,8 +98,6 @@ def option_input_file(required: bool = True, type_=click.File("r")):
     """
     return click.option(
         "--input-file",
-        "--if",
-        "input_file",
         metavar="string",
         required=required,
         help="name of file to read from",
@@ -114,8 +112,6 @@ def option_output_file(required: bool = True):
     """
     return click.option(
         "--output-file",
-        "--of",
-        "output_file",
         metavar="string",
         required=required,
         help="name of file to write to",
