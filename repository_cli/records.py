@@ -9,6 +9,7 @@
 
 import json
 import os
+from copy import deepcopy
 from io import SEEK_END, SEEK_SET
 from typing import TextIO
 
@@ -30,13 +31,16 @@ from .click_options import (
     option_quiet,
     option_record_type,
 )
+from .click_param_types import JSON
 from .types import Color
 from .utils import (
+    add_metadata_to_marc21_record,
+    exists_record,
     get_draft,
     get_identity,
     get_metadata_model,
+    get_record_or_draft,
     get_records_service,
-    record_exists,
     update_record,
 )
 
@@ -120,39 +124,89 @@ def list_records(
 
 
 @records.command("update")
-@option_input_file
+@option_input_file(type_=JSON(), name="records")
 @option_data_model
 @with_appcontext
-def update_records(input_file: TextIO):
+def update_records(records: list, data_model):
     """Update records specified in input file.
 
     example call:
         invenio repository records update --input-file in.json
-    """
-    try:
-        records = json.load(input_file)
-    except Exception as e:
-        secho(e.msg, fg=Color.error)
-        secho("The input file is not a valid JSON File", fg=Color.error)
-        return
 
+    Description:
+      the record could be replaced completelly by the given json
+      object. The record has to have the same structure as the normal
+      record within the repository.
+
+      WARNING: this command is really dangerous. It could ruin the
+      whole database.
+    """
     identity = get_identity(permission_name="system_process", role_name="admin")
-    service = get_records_service()
+    service = get_records_service(data_model)
 
     for record in records:
         pid = record["id"]
         secho(f"\n'{pid}', trying to update", fg=Color.warning)
-        if not record_exists(pid):
+
+        if not exists_record(service, pid, identity):
             secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
             continue
 
-        old_data = service.read(id_=pid, identity=identity).data.copy()
+        old_data = service.read(id_=pid, identity=identity).data
+
         try:
-            update_record(
-                pid=pid, identity=identity, new_data=record, old_data=old_data
-            )
+            update_record(service, pid, identity, record, old_data)
         except Exception as error:
             secho(f"'{pid}', problem during update, {error}", fg=Color.error)
+            continue
+
+        secho(f"'{pid}', successfully updated", fg=Color.success)
+
+
+@records.command("add-metadata")
+@option_input_file(type_=JSON(), name="records")
+@option_data_model
+@with_appcontext
+def add_metadata_to_records(records: list, data_model):
+    """Add metadata to records.
+
+    example call:
+        invenio repository records update --input-file in.json [--data-model marc21]
+
+    Description:
+      file should look like:
+      [{"id": "ID", "metadata": {"fields": {"995": [{"ind1": "", "ind2": "", "subfields": {"a": ["VALUE"]}}]}}}]
+    """
+    identity = get_identity(permission_name="system_process", role_name="admin")
+    service = get_records_service(data_model)
+
+    for record in records:
+        pid = record["id"]
+
+        secho(f"\n'{pid}', trying to update", fg=Color.warning)
+
+        try:
+            old_data = get_record_or_draft(service, pid, identity)
+        except RuntimeError as error:
+            secho(error.msg, fg=Color.error)
+            continue
+
+        if data_model == "marc21":
+            new_data = add_metadata_to_marc21_record(
+                service, deepcopy(old_data), record
+            )
+        else:
+            raise RuntimeError(
+                "Only marc21 is implemented for adding metadata to record."
+            )
+
+        try:
+            update_record(service, pid, identity, new_data, old_data)
+        except Exception as error:
+            secho(
+                f"'{pid}', an error occured on updating the record, {error}",
+                fg=Color.error,
+            )
             continue
 
         secho(f"'{pid}', successfully updated", fg=Color.success)
@@ -167,12 +221,13 @@ def delete_record(pid: str):
     example call:
         invenio repository records delete -p "fcze8-4vx33"
     """
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity(permission_name="system_process", role_name="admin")
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
 
-    identity = get_identity(permission_name="system_process", role_name="admin")
-    service = get_records_service()
     service.delete(id_=pid, identity=identity)
     secho(f"'{pid}', soft-deleted", fg=Color.success)
 
@@ -186,18 +241,18 @@ def delete_draft(pid: str):
     example call:
         invenio repository records delete-draft -p "fcze8-4vx33"
     """
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity(permission_name="system_process", role_name="admin")
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
-
-    identity = get_identity(permission_name="system_process", role_name="admin")
 
     draft = get_draft(pid=pid, identity=identity)
     if draft is None:
         secho(f"'{pid}', does not have a draft", fg=Color.warning)
         return
 
-    service = get_records_service()
     service.delete_draft(id_=pid, identity=identity)
     secho(f"'{pid}', deleted draft", fg=Color.success)
 
@@ -216,12 +271,13 @@ def list_pids(pid: str):
     example call:
         invenio repository records pids list -p <pid>
     """
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity()
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
 
-    identity = get_identity()
-    service = get_records_service()
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_pids = record_data.get("pids", {}).items()
 
@@ -251,12 +307,12 @@ def replace_pid(pid: str, pid_identifier: str):
         secho("pid_identifier is not valid JSON", fg=Color.error)
         return
 
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity(permission_name="system_process", role_name="admin")
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
-
-    identity = get_identity(permission_name="system_process", role_name="admin")
-    service = get_records_service()
 
     old_data = service.read(id_=pid, identity=identity).data.copy()
     new_data = old_data.copy()
@@ -271,7 +327,7 @@ def replace_pid(pid: str, pid_identifier: str):
     new_data["pids"] = pids
 
     try:
-        update_record(pid=pid, identity=identity, new_data=new_data, old_data=old_data)
+        update_record(service, pid, identity, new_data, old_data)
     except Exception as error:
         secho(f"'{pid}', problem during update, {error}", fg=Color.error)
         return
@@ -293,12 +349,13 @@ def list_identifiers(pid: str):
     example call:
         invenio repository records identifiers list -p <pid>
     """
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity()
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
 
-    identity = get_identity()
-    service = get_records_service()
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_identifiers = record_data["metadata"].get("identifiers", [])
 
@@ -327,12 +384,13 @@ def add_identifier(identifier: str, pid: str):
         secho("identifier is not valid JSON", fg=Color.error)
         return
 
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity("system_process", role_name="admin")
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
 
-    identity = get_identity("system_process", role_name="admin")
-    service = get_records_service()
     record_data = service.read(id_=pid, identity=identity).data.copy()
 
     current_identifiers = record_data["metadata"].get("identifiers", [])
@@ -347,9 +405,7 @@ def add_identifier(identifier: str, pid: str):
     record_data["metadata"]["identifiers"] = current_identifiers
 
     try:
-        update_record(
-            pid=pid, identity=identity, new_data=record_data, old_data=old_data
-        )
+        update_record(service, pid, identity, record_data, old_data)
     except Exception as error:
         secho(f"'{pid}', Error during update, {error}", fg=Color.error)
         return
@@ -376,12 +432,13 @@ def replace_identifier(identifier: str, pid: str):
         secho("identifier is not valid JSON", fg=Color.error)
         return
 
-    if not record_exists(pid):
+    service = get_records_service()
+    identity = get_identity("system_process", role_name="admin")
+
+    if not exists_record(service, pid, identity):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
 
-    identity = get_identity("system_process", role_name="admin")
-    service = get_records_service()
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_identifiers = record_data["metadata"].get("identifiers", [])
     scheme = identifier_json["scheme"]
@@ -400,9 +457,7 @@ def replace_identifier(identifier: str, pid: str):
     record_data["metadata"]["identifiers"] = current_identifiers
 
     try:
-        update_record(
-            pid=pid, identity=identity, new_data=record_data, old_data=old_data
-        )
+        update_record(service, pid, identity, record_data, old_data)
     except Exception as error:
         secho(f"'{pid}', problem during update, {error}", fg=Color.error)
         return
