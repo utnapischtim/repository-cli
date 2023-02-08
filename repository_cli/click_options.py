@@ -11,6 +11,18 @@
 import click
 
 
+def optional_brackets(func):
+    """With this decorator it is possible to write decorators without ()."""
+
+    def wrapper(*args, **kwargs):
+        if len(args) >= 1 and callable(args[0]):
+            return func()(args[0])
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@optional_brackets
 def option_quiet():
     """Get parameter option for quiet."""
     return click.option(
@@ -21,6 +33,7 @@ def option_quiet():
     )
 
 
+@optional_brackets
 def option_jq_filter():
     """Get parameter option for jq filter."""
     return click.option(
@@ -32,6 +45,7 @@ def option_jq_filter():
     )
 
 
+@optional_brackets
 def option_data_model():
     """Get parameter option for data model."""
     return click.option(
@@ -41,6 +55,7 @@ def option_data_model():
     )
 
 
+@optional_brackets
 def option_record_type():
     """Get parameter option for record type."""
     return click.option(
@@ -50,6 +65,7 @@ def option_record_type():
     )
 
 
+@optional_brackets
 def option_identifier(required: bool = True):
     """Get parameter options for metadata identifier.
 
@@ -64,6 +80,7 @@ def option_identifier(required: bool = True):
 
 
 # TODO. rename to option_pid
+@optional_brackets
 def option_pid_identifier(required: bool = True):
     """Get parameter options for metadata identifier.
 
@@ -77,6 +94,7 @@ def option_pid_identifier(required: bool = True):
 
 
 # TODO: rename to option_id, refactore to true concept of the used id
+@optional_brackets
 def option_pid(required: bool = True):
     """Get parameter options for record PID.
 
@@ -91,6 +109,7 @@ def option_pid(required: bool = True):
     )
 
 
+@optional_brackets
 def option_input_file(required: bool = True, type_=click.File("r")):
     """Get parameter options for input file.
 
@@ -105,6 +124,7 @@ def option_input_file(required: bool = True, type_=click.File("r")):
     )
 
 
+@optional_brackets
 def option_output_file(required: bool = True):
     """Get parameter options for output file.
 

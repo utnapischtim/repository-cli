@@ -47,8 +47,8 @@ def records():
 
 
 @records.command("count")
-@option_data_model()
-@option_record_type()
+@option_data_model
+@option_record_type
 @with_appcontext
 def count_records(data_model, record_type):
     """Count number of record's.
@@ -64,10 +64,10 @@ def count_records(data_model, record_type):
 
 @records.command("list")
 @option_output_file(required=False)
-@option_data_model()
-@option_quiet()
-@option_jq_filter()
-@option_record_type()
+@option_data_model
+@option_quiet
+@option_jq_filter
+@option_record_type
 @with_appcontext
 def list_records(
     output_file: TextIO, data_model: str, quiet: bool, jq_filter: str, record_type: str
@@ -120,7 +120,8 @@ def list_records(
 
 
 @records.command("update")
-@option_input_file()
+@option_input_file
+@option_data_model
 @with_appcontext
 def update_records(input_file: TextIO):
     """Update records specified in input file.
@@ -158,7 +159,7 @@ def update_records(input_file: TextIO):
 
 
 @records.command("delete")
-@option_pid()
+@option_pid
 @with_appcontext
 def delete_record(pid: str):
     """Delete record.
@@ -177,7 +178,7 @@ def delete_record(pid: str):
 
 
 @records.command("delete-draft")
-@option_pid()
+@option_pid
 @with_appcontext
 def delete_draft(pid: str):
     """Delete draft.
@@ -207,7 +208,7 @@ def pids():
 
 
 @pids.command("list")
-@option_pid()
+@option_pid
 @with_appcontext
 def list_pids(pid: str):
     """List record's pids.
@@ -232,8 +233,8 @@ def list_pids(pid: str):
 
 
 @pids.command("replace")
-@option_pid()
-@option_pid_identifier()
+@option_pid
+@option_pid_identifier
 @with_appcontext
 def replace_pid(pid: str, pid_identifier: str):
     """Update pid doi to unmanaged.
@@ -284,7 +285,7 @@ def identifiers():
 
 
 @identifiers.command("list")
-@option_pid()
+@option_pid
 @with_appcontext
 def list_identifiers(pid: str):
     """List record's identifiers.
@@ -309,8 +310,8 @@ def list_identifiers(pid: str):
 
 
 @identifiers.command("add")
-@option_identifier()
-@option_pid()
+@option_identifier
+@option_pid
 @with_appcontext
 def add_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
@@ -358,8 +359,8 @@ def add_identifier(identifier: str, pid: str):
 
 
 @identifiers.command("replace")
-@option_identifier()
-@option_pid()
+@option_identifier
+@option_pid
 @with_appcontext
 def replace_identifier(identifier: str, pid: str):
     """Update the specified record's identifiers.
@@ -410,8 +411,8 @@ def replace_identifier(identifier: str, pid: str):
 
 
 @records.command("add_file")
-@option_pid()
-@option_data_model()
+@option_pid
+@option_data_model
 @option_input_file(type_=click.File("rb"))
 @click.option("--replace-existing", "-f", is_flag=True, default=False)
 @click.option("--enable-files", is_flag=True, default=False)
