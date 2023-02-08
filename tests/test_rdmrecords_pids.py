@@ -17,6 +17,7 @@ from repository_cli.records import list_pids, replace_pid
 
 
 def test_list_pids_with_entries(app_initialized, create_record):
+    """Test list pids with entries."""
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
     response = runner.invoke(list_pids, ["--pid", r_id])
@@ -24,6 +25,7 @@ def test_list_pids_with_entries(app_initialized, create_record):
 
 
 def test_list_pids_record_not_found(app_initialized):
+    """Test list pids record not found."""
     runner = app_initialized.test_cli_runner()
     r_id = "this does not exist"
     response = runner.invoke(list_pids, ["--pid", r_id])
@@ -46,6 +48,7 @@ def test_list_pids_record_not_found(app_initialized):
 
 
 def test_replace_pid_pid_does_not_exist(app_initialized, pid_identifier, create_record):
+    """Test replace pid pid does not exist."""
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
     pid_identifier["unknown_identifier"] = pid_identifier.pop(
@@ -60,6 +63,7 @@ def test_replace_pid_pid_does_not_exist(app_initialized, pid_identifier, create_
 
 
 def test_replace_pid_wrong_identifier_type(app_initialized, create_record):
+    """Test replace pid wrong identifier type."""
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
     response = runner.invoke(
@@ -70,6 +74,7 @@ def test_replace_pid_wrong_identifier_type(app_initialized, create_record):
 
 
 def test_replace_pid_record_not_found(app_initialized, pid_identifier):
+    """Test replace pid record not found."""
     runner = app_initialized.test_cli_runner()
     r_id = "this does not exist"
     response = runner.invoke(

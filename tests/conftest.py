@@ -29,8 +29,8 @@ from invenio_vocabularies.proxies import current_service as vocabulary_service
 from invenio_vocabularies.records.api import Vocabulary
 
 
-@pytest.fixture(scope="module")
-def app_config(app_config):
+@pytest.fixture(scope="module", name="app_config")
+def fixture_app_config(app_config):
     """Mimic an instance's configuration."""
     app_config["JSONSCHEMAS_HOST"] = "no-use"
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
@@ -52,22 +52,22 @@ def app_config(app_config):
 
 
 @pytest.fixture(scope="module")
-def create_app(instance_path, entry_points):
+def create_app():
     """Application factory fixture."""
     return _create_api
 
 
-@pytest.fixture(scope="module")
-def app_initialized(app, resource_type_item):
+@pytest.fixture(scope="module", name="app_initialized")
+def fixture_app_initialized(app, resource_type_item):  # pylint: disable=unused-argument
     """Flask application with data added."""
-    d = app.config["DATADIR"]
-    if os.path.exists(d):
-        shutil.rmtree(d)
-        os.makedirs(d)
+    datadir = app.config["DATADIR"]
+    if os.path.exists(datadir):
+        shutil.rmtree(datadir)
+        os.makedirs(datadir)
 
-    loc = Location(name="local", uri=d, default=True)
-    db.session.add(loc)
-    db.session.commit()
+    loc = Location(name="local", uri=datadir, default=True)
+    db.session.add(loc)  # pylint: disable=no-member
+    db.session.commit()  # pylint: disable=no-member
 
     runner = app.test_cli_runner()
     runner.invoke(roles_create, ["admin"])
@@ -76,8 +76,8 @@ def app_initialized(app, resource_type_item):
     return app
 
 
-@pytest.fixture()
-def create_record(app_initialized):
+@pytest.fixture(name="create_record")
+def fixture_create_record(app_initialized):  # pylint: disable=unused-argument
     """Create and publish new record."""
     record_service = current_rdm_records.records_service
     identity = Identity(1)
@@ -95,7 +95,7 @@ def create_record(app_initialized):
 
 
 @pytest.fixture()
-def create_draft(app_initialized, create_record):
+def create_draft(app_initialized, create_record):  # pylint: disable=unused-argument
     """Create draft for record."""
     record_service = current_rdm_records.records_service
     identity = Identity(1)
@@ -159,23 +159,17 @@ def fake_record():
 @pytest.fixture()
 def identifier():
     """Create identifier for test cases."""
-    identifier = {"identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}
-
-    return identifier
+    return {"identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}
 
 
 @pytest.fixture()
 def pid_identifier():
     """Create pid identifier for test cases."""
-    pid_identifier = {
-        "doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}
-    }
-
-    return pid_identifier
+    return {"doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}}
 
 
-@pytest.fixture(scope="module")
-def resource_type_type(app):
+@pytest.fixture(scope="module", name="resource_type_type")
+def fixture_resource_type_type(app):  # pylint: disable=unused-argument
     """Resource type vocabulary type.
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L398
@@ -183,8 +177,10 @@ def resource_type_type(app):
     return vocabulary_service.create_type(system_identity, "resourcetypes", "rsrct")
 
 
-@pytest.fixture(scope="module")
-def resource_type_item(app, resource_type_type):
+@pytest.fixture(scope="module", name="resource_type_item")
+def fixture_resource_type_item(
+    app, resource_type_type
+):  # pylint: disable=unused-argument
     """Resource type vocabulary record.
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L405

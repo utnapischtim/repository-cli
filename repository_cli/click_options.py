@@ -84,7 +84,8 @@ def option_identifier(required: bool = True):
 def option_pid_identifier(required: bool = True):
     """Get parameter options for metadata identifier.
 
-    Sample use: --pid-identifier '{"doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}}'
+    Sample use: --pid-identifier '{"doi": {"identifier": "10.48436/fcze8-4vx33",
+                                           "provider": "unmanaged"}}'
     """
     return click.option(
         "--pid-identifier",

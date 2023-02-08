@@ -65,11 +65,11 @@ def get_record_or_draft(
     """Get record or draft."""
     try:
         old_data = service.read(id_=pid, identity=identity).data
-    except Exception:
+    except Exception as exc:
         try:
             old_data = service.read_draft(id_=pid, identity=identity).data
         except Exception:
-            raise RuntimeError(f"Record ({pid}) does not exists")
+            raise RuntimeError(f"Record ({pid}) does not exists") from exc
     return old_data
 
 
@@ -100,13 +100,15 @@ def get_metadata_model(
 
     try:
         _type = available_models.get(record_type)
-    except KeyError:
-        raise RuntimeError("the used record_type should be of the list [record, draft]")
+    except KeyError as exc:
+        msg = "the used record_type should be of the list [record, draft]"
+        raise RuntimeError(msg) from exc
 
     try:
         return _type.get(data_model)
-    except KeyError:
-        raise RuntimeError("the used data_model should be of the list [rdm, marc21]")
+    except KeyError as exc:
+        msg = "the used data_model should be of the list [rdm, marc21]"
+        raise RuntimeError(msg) from exc
 
 
 def update_record(
@@ -131,9 +133,7 @@ def update_record(
         raise error
 
 
-def add_metadata_to_marc21_record(
-    service: RecordService, metadata: dict, addition: dict
-) -> dict:
+def add_metadata_to_marc21_record(metadata: dict, addition: dict) -> dict:
     """Add fields to marc21 record."""
     marc21 = Marc21Metadata(json=metadata["metadata"])
 

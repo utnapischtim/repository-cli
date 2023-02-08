@@ -332,6 +332,7 @@ autoclass_content = "both"
 nitpick_ignore = [
     ("py:class", "flask_principal.Identity"),
     ("py:class", "invenio_drafts_resources.records.api.Draft"),
+    ("py:class", "invenio_drafts_resources.records.api.Record"),
     ("py:class", "invenio_rdm_records.services.services.RDMRecordService"),
     ("py:class", "invenio_records_resources.services.records.service.RecordService"),
     ("py:class", "sqlalchemy.orm.decl_api.Model"),

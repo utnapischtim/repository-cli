@@ -45,12 +45,12 @@ from .utils import (
 )
 
 
-@click.group()
-def records():
+@click.group("records")
+def group_records():
     """Management commands for records."""
 
 
-@records.command("count")
+@group_records.command("count")
 @option_data_model
 @option_record_type
 @with_appcontext
@@ -66,7 +66,7 @@ def count_records(data_model, record_type):
     secho(f"{num_records} records", fg=Color.success)
 
 
-@records.command("list")
+@group_records.command("list")
 @option_output_file(required=False)
 @option_data_model
 @option_quiet
@@ -123,7 +123,7 @@ def list_records(
         secho(output_msg, fg=Color.success)
 
 
-@records.command("update")
+@group_records.command("update")
 @option_input_file(type_=JSON(), name="records")
 @option_data_model
 @with_appcontext
@@ -163,7 +163,7 @@ def update_records(records: list, data_model):
         secho(f"'{pid}', successfully updated", fg=Color.success)
 
 
-@records.command("add-metadata")
+@group_records.command("add-metadata")
 @option_input_file(type_=JSON(), name="records")
 @option_data_model
 @with_appcontext
@@ -175,7 +175,14 @@ def add_metadata_to_records(records: list, data_model):
 
     Description:
       file should look like:
-      [{"id": "ID", "metadata": {"fields": {"995": [{"ind1": "", "ind2": "", "subfields": {"a": ["VALUE"]}}]}}}]
+      [{"id": "ID",
+         "metadata": {
+           "fields": {
+             "995": [{"ind1": "", "ind2": "", "subfields": {"a": ["VALUE"]}}]
+           }
+         }
+       }
+      ]
     """
     identity = get_identity(permission_name="system_process", role_name="admin")
     service = get_records_service(data_model)
@@ -188,13 +195,11 @@ def add_metadata_to_records(records: list, data_model):
         try:
             old_data = get_record_or_draft(service, pid, identity)
         except RuntimeError as error:
-            secho(error.msg, fg=Color.error)
+            secho(str(error), fg=Color.error)
             continue
 
         if data_model == "marc21":
-            new_data = add_metadata_to_marc21_record(
-                service, deepcopy(old_data), record
-            )
+            new_data = add_metadata_to_marc21_record(deepcopy(old_data), record)
         else:
             raise RuntimeError(
                 "Only marc21 is implemented for adding metadata to record."
@@ -212,7 +217,7 @@ def add_metadata_to_records(records: list, data_model):
         secho(f"'{pid}', successfully updated", fg=Color.success)
 
 
-@records.command("delete")
+@group_records.command("delete")
 @option_pid
 @with_appcontext
 def delete_record(pid: str):
@@ -232,7 +237,7 @@ def delete_record(pid: str):
     secho(f"'{pid}', soft-deleted", fg=Color.success)
 
 
-@records.command("delete-draft")
+@group_records.command("delete-draft")
 @option_pid
 @with_appcontext
 def delete_draft(pid: str):
@@ -248,7 +253,7 @@ def delete_draft(pid: str):
         secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
         return
 
-    draft = get_draft(pid=pid, identity=identity)
+    draft = get_draft(service=service, pid=pid, identity=identity)
     if draft is None:
         secho(f"'{pid}', does not have a draft", fg=Color.warning)
         return
@@ -257,12 +262,12 @@ def delete_draft(pid: str):
     secho(f"'{pid}', deleted draft", fg=Color.success)
 
 
-@records.group()
-def pids():
+@group_records.group("pids")
+def group_pids():
     """Management commands for record pids."""
 
 
-@pids.command("list")
+@group_pids.command("list")
 @option_pid
 @with_appcontext
 def list_pids(pid: str):
@@ -284,11 +289,11 @@ def list_pids(pid: str):
     if len(current_pids) == 0:
         secho("record does not have any pids", fg=Color.warning)
 
-    for index, pid in enumerate(current_pids):
-        secho(json.dumps(pid, indent=2), fg=Color.alternate[index % 2])
+    for index, current_pid in enumerate(current_pids):
+        secho(json.dumps(current_pid, indent=2), fg=Color.alternate[index % 2])
 
 
-@pids.command("replace")
+@group_pids.command("replace")
 @option_pid
 @option_pid_identifier
 @with_appcontext
@@ -303,7 +308,7 @@ def replace_pid(pid: str, pid_identifier: str):
     try:
         pid_identifier_json = json.loads(pid_identifier)
     except Exception as error:
-        secho(error.msg, fg=Color.error)
+        secho(str(error), fg=Color.error)
         secho("pid_identifier is not valid JSON", fg=Color.error)
         return
 
@@ -335,12 +340,12 @@ def replace_pid(pid: str, pid_identifier: str):
     secho(f"'{pid}', successfully updated", fg=Color.success)
 
 
-@records.group()
-def identifiers():
+@group_records.group("identifiers")
+def group_identifiers():
     """Management commands for record identifiers."""
 
 
-@identifiers.command("list")
+@group_identifiers.command("list")
 @option_pid
 @with_appcontext
 def list_identifiers(pid: str):
@@ -366,7 +371,7 @@ def list_identifiers(pid: str):
         secho(json.dumps(identifier, indent=2), fg=Color.alternate[index % 2])
 
 
-@identifiers.command("add")
+@group_identifiers.command("add")
 @option_identifier
 @option_pid
 @with_appcontext
@@ -379,8 +384,8 @@ def add_identifier(identifier: str, pid: str):
     """
     try:
         identifier_json = json.loads(identifier)
-    except Exception as e:
-        secho(e.msg, fg=Color.error)
+    except Exception as error:
+        secho(str(error), fg=Color.error)
         secho("identifier is not valid JSON", fg=Color.error)
         return
 
@@ -414,7 +419,7 @@ def add_identifier(identifier: str, pid: str):
     return
 
 
-@identifiers.command("replace")
+@group_identifiers.command("replace")
 @option_identifier
 @option_pid
 @with_appcontext
@@ -428,7 +433,7 @@ def replace_identifier(identifier: str, pid: str):
     try:
         identifier_json = json.loads(identifier)
     except Exception as error:
-        secho(error.msg, fg=Color.error)
+        secho(str(error), fg=Color.error)
         secho("identifier is not valid JSON", fg=Color.error)
         return
 
@@ -443,8 +448,8 @@ def replace_identifier(identifier: str, pid: str):
     current_identifiers = record_data["metadata"].get("identifiers", [])
     scheme = identifier_json["scheme"]
     replaced = False
-    for index, ci in enumerate(current_identifiers):
-        if ci["scheme"] == scheme:
+    for index, current_identifier in enumerate(current_identifiers):
+        if current_identifier["scheme"] == scheme:
             current_identifiers[index] = identifier_json
             replaced = True
             break
@@ -465,7 +470,7 @@ def replace_identifier(identifier: str, pid: str):
     secho(f"Identifier for '{pid}' replaced.", fg=Color.success)
 
 
-@records.command("add_file")
+@group_records.command("add_file")
 @option_pid
 @option_data_model
 @option_input_file(type_=click.File("rb"))
@@ -478,6 +483,7 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
     service = get_records_service(data_model=data_model)
 
     try:
+        # pylint: disable=protected-access
         record = service.read(identity=identity, id_=pid)._record
     except PIDDoesNotExistError as error:
         secho(
@@ -498,14 +504,14 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
 
     if obj is not None and not replace_existing:
         secho(
-            f"File with filename '{filename}' already exists. Use `--replace-existing/-f` to overwrite it.",
+            f"Use --replace-existing to overwrite existing {filename} file",
             fg=Color.error,
         )
         return
 
     if not files.enabled and not enable_files:
         secho(
-            "Files are not enabled for this record (metadata-only). Use `--enable-files` to add it anyway.",
+            "Use --enable-files to add files to (metadata-only) record",
             fg=Color.error,
         )
         return
@@ -541,7 +547,7 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
         files.lock()
 
         record.commit()
-        db.session.commit()
+        db.session.commit()  # pylint: disable=no-member
         secho("File added successfully.", fg=Color.success)
     else:
         secho("File addition aborted.", fg=Color.abort)

@@ -9,13 +9,11 @@
 
 from flask import Flask
 
-from repository_cli import RepositoryCli
+from repository_cli import RepositoryCli, __version__
 
 
 def test_version():
     """Test version import."""
-    from repository_cli import __version__
-
     assert __version__
 
 

@@ -29,10 +29,10 @@ class JSON(ParamType):
             sys.exit()
 
         try:
-            with open(value, "r") as fp:
-                obj = load(fp)
+            with open(value, "r", encoding="utf8") as file_pointer:
+                obj = load(file_pointer)
             return obj
-        except JSONDecodeError as e:
+        except JSONDecodeError as error:
             secho("ERROR - Invalid JSON provided.", fg=Color.error)
-            secho(f"  error: {e.args[0]}", fg=Color.error)
+            secho(f"  error: {error.args[0]}", fg=Color.error)
             sys.exit()

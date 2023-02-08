@@ -9,8 +9,8 @@
 
 import click
 
-from .records import records
-from .users import users
+from .records import group_records
+from .users import group_users
 
 
 @click.group()
@@ -18,5 +18,5 @@ def utilities():
     """Utility commands for TU Graz Repository."""
 
 
-utilities.add_command(users)
-utilities.add_command(records)
+utilities.add_command(group_users)
+utilities.add_command(group_records)

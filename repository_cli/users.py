@@ -13,12 +13,12 @@ from invenio_accounts.models import User
 from tabulate import tabulate
 
 
-@click.group()
-def users():
+@click.group("users")
+def group_users():
     """Management commands for users."""
 
 
-@users.command("list")
+@group_users.command("list")
 @with_appcontext
 def list_users():
     """List registered users.

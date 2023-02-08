@@ -8,7 +8,7 @@
 """CLI utilities for TU Graz Repository."""
 
 
-class RepositoryCli(object):
+class RepositoryCli:
     """repository-cli extension."""
 
     def __init__(self, app=None):
