@@ -7,6 +7,19 @@
 Changes
 =======
 
+Version v0.4.0 (release 2023-02-09)
+
+- setup: add pylint and bandit
+- feature: add parameter add-metadata-to-records
+- refactor: add decorator without brackets
+- refactor: remove two character long forms
+- change: empty output not shown for list
+- change: command list output_file required=False
+- refactor:
+- refactor: make count datamodel independent
+- refactor: removed directory cli
+
+
 Version v0.3.1 (release 2023-02-01)
 
 - setup: move jq and tabulate to install require
