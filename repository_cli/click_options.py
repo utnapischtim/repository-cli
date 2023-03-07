@@ -111,7 +111,12 @@ def option_pid(required: bool = True):
 
 
 @optional_brackets
-def option_input_file(required: bool = True, type_=click.File("r"), name="input_file"):
+def option_input_file(
+    required: bool = True,
+    type_=click.File("r"),
+    name="input_file",
+    help_="name of file to read from",
+):
     """Get parameter options for input file.
 
     Sample use: --input-file "input.json"
@@ -121,7 +126,7 @@ def option_input_file(required: bool = True, type_=click.File("r"), name="input_
         name,
         metavar="string",
         required=required,
-        help="name of file to read from",
+        help=help_,
         type=type_,
     )
 
