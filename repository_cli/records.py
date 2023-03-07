@@ -470,7 +470,7 @@ def replace_identifier(identifier: str, pid: str):
     secho(f"Identifier for '{pid}' replaced.", fg=Color.success)
 
 
-@group_records.command("add_file")
+@group_records.command("add-file")
 @option_pid
 @option_data_model
 @option_input_file(type_=click.File("rb"))
