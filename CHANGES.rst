@@ -7,6 +7,13 @@
 Changes
 =======
 
+Version v0.5.0 (release 2023-03-08)
+
+- setup: remove python 3.11
+- records: add command modify-access
+- records: change add-file command to common pattern
+
+
 Version v0.4.0 (release 2023-02-09)
 
 - setup: add pylint and bandit
