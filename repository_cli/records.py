@@ -585,3 +585,23 @@ def modify_access(data_model, record_ids, record_id, access_record, access_file)
         service.edit(id_=rec_id, identity=identity)
         service.update_draft(id_=rec_id, identity=identity, data=data)
         service.publish(id_=rec_id, identity=identity)
+
+
+@group_records.command("publish")
+@option_data_model
+@option_input_file(
+    type_=JSON(), name="record_ids", help_="json array of ids", required=False
+)
+@click.option("--record-id", type=click.STRING)
+@with_appcontext
+def publish(data_model, record_ids, record_id):
+    """Publish all records."""
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
+
+    if not record_ids and record_id:
+        record_ids = [record_id]
+
+    for rec_id in record_ids:
+        record = service.publish(id_=rec_id, identity=identity)
+        secho(f"record ({record.id}) published", fg=Color.success)
