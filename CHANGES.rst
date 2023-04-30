@@ -7,6 +7,12 @@
 Changes
 =======
 
+Version v0.6.0 (release 2023-05-01)
+
+- cli: add command publish
+- cli: add record_id parameter to modify-access
+
+
 Version v0.5.0 (release 2023-03-08)
 
 - setup: remove python 3.11
