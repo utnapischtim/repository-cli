@@ -555,7 +555,10 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
 
 @group_records.command("modify-access")
 @option_data_model
-@option_input_file(type_=JSON(), name="record_ids", help_="json array of ids")
+@option_input_file(
+    type_=JSON(), name="record_ids", help_="json array of ids", required=False
+)
+@click.option("--record-id", type=click.STRING)
 @click.option(
     "--access-record", default=None, type=click.Choice(["public", "restricted"])
 )
@@ -563,19 +566,22 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
     "--access-file", default=None, type=click.Choice(["public", "restricted"])
 )
 @with_appcontext
-def modify_access(data_model, record_ids, access_record, access_file):
+def modify_access(data_model, record_ids, record_id, access_record, access_file):
     """Modify the access object within the record."""
     identity = get_identity("system_process", role_name="admin")
     service = get_records_service(data_model=data_model)
 
-    for record_id in record_ids:
-        data = service.read(id_=record_id, identity=identity).data
+    if not record_ids and record_id:
+        record_ids = [record_id]
+
+    for rec_id in record_ids:
+        data = service.read(id_=rec_id, identity=identity).data
 
         if access_record:
             data["access"]["record"] = access_record
         if access_file:
             data["access"]["files"] = access_file
 
-        service.edit(id_=record_id, identity=identity)
-        service.update_draft(id_=record_id, identity=identity, data=data)
-        service.publish(id_=record_id, identity=identity)
+        service.edit(id_=rec_id, identity=identity)
+        service.update_draft(id_=rec_id, identity=identity, data=data)
+        service.publish(id_=rec_id, identity=identity)
