@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021 Graz University of Technology.
+# Copyright (C) 2021-2023 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -13,9 +13,11 @@ fixtures are available.
 
 import os
 import shutil
+from pathlib import Path
 
 import pytest
 from faker import Faker
+from flask import Flask
 from flask_principal import Identity
 from invenio_access.cli import allow_action
 from invenio_access.permissions import system_identity, system_process
@@ -23,14 +25,16 @@ from invenio_accounts.cli import roles_create
 from invenio_app.factory import create_api as _create_api
 from invenio_db import db
 from invenio_files_rest.models import Location
-from invenio_rdm_records.cli import create_fake_record
+from invenio_rdm_records.fixtures.demo import create_fake_record
 from invenio_rdm_records.proxies import current_rdm_records
+from invenio_records_resources.services.records.results import RecordItem
 from invenio_vocabularies.proxies import current_service as vocabulary_service
 from invenio_vocabularies.records.api import Vocabulary
+from invenio_vocabularies.records.models import VocabularyType
 
 
 @pytest.fixture(scope="module", name="app_config")
-def fixture_app_config(app_config):
+def fixture_app_config(app_config: dict) -> dict:
     """Mimic an instance's configuration."""
     app_config["JSONSCHEMAS_HOST"] = "no-use"
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
@@ -43,7 +47,8 @@ def fixture_app_config(app_config):
     ] = "invenio_jsonschemas.proxies.current_refresolver_store"
 
     app_config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "SQLALCHEMY_DATABASE_URI", "sqlite://"
+        "SQLALCHEMY_DATABASE_URI",
+        "sqlite://",
     )
     app_config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app_config["DATADIR"] = "data"
@@ -52,22 +57,25 @@ def fixture_app_config(app_config):
 
 
 @pytest.fixture(scope="module")
-def create_app():
+def create_app() -> Flask:
     """Application factory fixture."""
     return _create_api
 
 
 @pytest.fixture(scope="module", name="app_initialized")
-def fixture_app_initialized(app, resource_type_item):  # pylint: disable=unused-argument
+def fixture_app_initialized(
+    app: Flask,
+    resource_type_item: str,  # noqa: ARG001
+) -> Flask:
     """Flask application with data added."""
     datadir = app.config["DATADIR"]
-    if os.path.exists(datadir):
+    if Path(datadir).exists():
         shutil.rmtree(datadir)
-        os.makedirs(datadir)
+        Path(datadir).makedir()
 
     loc = Location(name="local", uri=datadir, default=True)
-    db.session.add(loc)  # pylint: disable=no-member
-    db.session.commit()  # pylint: disable=no-member
+    db.session.add(loc)
+    db.session.commit()
 
     runner = app.test_cli_runner()
     runner.invoke(roles_create, ["admin"])
@@ -77,7 +85,7 @@ def fixture_app_initialized(app, resource_type_item):  # pylint: disable=unused-
 
 
 @pytest.fixture(name="create_record")
-def fixture_create_record(app_initialized):  # pylint: disable=unused-argument
+def fixture_create_record(app_initialized: Flask) -> RecordItem:  # noqa: ARG001
     """Create and publish new record."""
     record_service = current_rdm_records.records_service
     identity = Identity(1)
@@ -85,7 +93,7 @@ def fixture_create_record(app_initialized):  # pylint: disable=unused-argument
 
     record_json = minimal_record()
     record_json["metadata"]["identifiers"] = [
-        {"identifier": "ark:/123/456", "scheme": "ark"}
+        {"identifier": "ark:/123/456", "scheme": "ark"},
     ]
 
     rec = record_service.create(data=record_json, identity=identity)
@@ -95,17 +103,19 @@ def fixture_create_record(app_initialized):  # pylint: disable=unused-argument
 
 
 @pytest.fixture()
-def create_draft(app_initialized, create_record):  # pylint: disable=unused-argument
+def create_draft(
+    app_initialized: Flask,  # noqa: ARG001
+    create_record: RecordItem,
+) -> RecordItem:
     """Create draft for record."""
     record_service = current_rdm_records.records_service
     identity = Identity(1)
     identity.provides.add(system_process)
 
-    draft = record_service.edit(id_=create_record.id, identity=identity)
-    return draft
+    return record_service.edit(id_=create_record.id, identity=identity)
 
 
-def minimal_record():
+def minimal_record() -> dict:
     """Minimal record data as dict coming from the external world.
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L279
@@ -128,7 +138,7 @@ def minimal_record():
                         "family_name": "Brown",
                         "given_name": "Troy",
                         "type": "personal",
-                    }
+                    },
                 },
                 {
                     "person_or_org": {
@@ -142,7 +152,7 @@ def minimal_record():
     }
 
 
-def fake_record():
+def fake_record() -> dict:
     """Create fake record and replace date.
 
     As date ranges (e.g. 1968-08-20/2020-11) don't work yet.
@@ -157,19 +167,19 @@ def fake_record():
 
 
 @pytest.fixture()
-def identifier():
+def identifier() -> dict:
     """Create identifier for test cases."""
     return {"identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}
 
 
 @pytest.fixture()
-def pid_identifier():
+def pid_identifier() -> dict:
     """Create pid identifier for test cases."""
     return {"doi": {"identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}}
 
 
 @pytest.fixture(scope="module", name="resource_type_type")
-def fixture_resource_type_type(app):  # pylint: disable=unused-argument
+def fixture_resource_type_type(app: Flask) -> VocabularyType:  # noqa: ARG001
     """Resource type vocabulary type.
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L398
@@ -179,8 +189,9 @@ def fixture_resource_type_type(app):  # pylint: disable=unused-argument
 
 @pytest.fixture(scope="module", name="resource_type_item")
 def fixture_resource_type_item(
-    app, resource_type_type
-):  # pylint: disable=unused-argument
+    app: Flask,  # noqa: ARG001
+    resource_type_type: str,  # noqa: ARG001
+) -> VocabularyType:
     """Resource type vocabulary record.
 
     https://github.com/inveniosoftware/invenio-rdm-records/blob/aa575a4f8b1beb4d24a448067b649d6f0b8c085e/tests/conftest.py#L405

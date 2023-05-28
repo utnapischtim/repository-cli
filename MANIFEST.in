@@ -24,6 +24,7 @@ recursive-include repository_cli/translations *.po *.pot *.mo
 include *.rst
 include *.sh
 include *.txt
+include *.toml
 include LICENSE
 include babel.ini
 include pytest.ini

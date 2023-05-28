@@ -8,13 +8,18 @@
 """Commonly used options for CLI commands."""
 
 
-import click
+from collections.abc import Callable
+from typing import Any, TypeVar
+
+from click import BOOL, STRING, Choice, File, option
+
+T = TypeVar("T")
 
 
-def optional_brackets(func):
+def optional_brackets(func: Callable) -> Callable:
     """With this decorator it is possible to write decorators without ()."""
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: dict, **kwargs: dict) -> Any:  # noqa: ANN401
         if len(args) >= 1 and callable(args[0]):
             return func()(args[0])
         return func(*args, **kwargs)
@@ -23,55 +28,57 @@ def optional_brackets(func):
 
 
 @optional_brackets
-def option_quiet():
+def option_quiet() -> Callable[[T], T]:
     """Get parameter option for quiet."""
-    return click.option(
+    return option(
         "--quiet",
         is_flag=True,
         default=False,
-        type=click.BOOL,
+        type=BOOL,
     )
 
 
 @optional_brackets
-def option_jq_filter():
+def option_jq_filter() -> Callable[[T], T]:
     """Get parameter option for jq filter."""
-    return click.option(
+    return option(
         "--jq-filter",
         default=".",
-        type=click.STRING,
+        type=STRING,
         required=False,
         help="filter for jq",
     )
 
 
 @optional_brackets
-def option_data_model():
+def option_data_model() -> Callable[[T], T]:
     """Get parameter option for data model."""
-    return click.option(
+    return option(
         "--data-model",
-        type=click.Choice(["rdm", "marc21"]),
+        type=Choice(["rdm", "marc21"]),
         default="rdm",
     )
 
 
 @optional_brackets
-def option_record_type():
+def option_record_type() -> Callable[[T], T]:
     """Get parameter option for record type."""
-    return click.option(
+    return option(
         "--record-type",
-        type=click.Choice(["record", "draft"], case_sensitive=True),
+        type=Choice(["record", "draft"], case_sensitive=True),
         default="record",
     )
 
 
 @optional_brackets
-def option_identifier(required: bool = True):
+def option_identifier(
+    required: bool = True,  # noqa: FBT001, FBT002
+) -> Callable[[T], T]:
     """Get parameter options for metadata identifier.
 
     Sample use: --identifier '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
-    return click.option(
+    return option(
         "--identifier",
         "-i",
         required=required,
@@ -81,13 +88,15 @@ def option_identifier(required: bool = True):
 
 # TODO. rename to option_pid
 @optional_brackets
-def option_pid_identifier(required: bool = True):
+def option_pid_identifier(
+    required: bool = True,  # noqa: FBT001, FBT002
+) -> Callable[[T], T]:
     """Get parameter options for metadata identifier.
 
     Sample use: --pid-identifier '{"doi": {"identifier": "10.48436/fcze8-4vx33",
                                            "provider": "unmanaged"}}'
     """
-    return click.option(
+    return option(
         "--pid-identifier",
         required=required,
         help="pid identifier as JSON",
@@ -96,12 +105,14 @@ def option_pid_identifier(required: bool = True):
 
 # TODO: rename to option_id, refactore to true concept of the used id
 @optional_brackets
-def option_pid(required: bool = True):
+def option_pid(
+    required: bool = True,  # noqa: FBT001, FBT002
+) -> Callable[[T], T]:
     """Get parameter options for record PID.
 
     Sample use: --pid "fcze8-4vx33"
     """
-    return click.option(
+    return option(
         "--pid",
         "-p",
         metavar="PID_VALUE",
@@ -112,16 +123,18 @@ def option_pid(required: bool = True):
 
 @optional_brackets
 def option_input_file(
-    required: bool = True,
-    type_=click.File("r"),
-    name="input_file",
-    help_="name of file to read from",
-):
+    required: bool = True,  # noqa: FBT001, FBT002
+    type_: File = None,
+    name: str = "input_file",
+    help_: str = "name of file to read from",
+) -> Callable[[T], T]:
     """Get parameter options for input file.
 
     Sample use: --input-file "input.json"
     """
-    return click.option(
+    if not type_:
+        type_ = File("r")
+    return option(
         "--input-file",
         name,
         metavar="string",
@@ -132,15 +145,17 @@ def option_input_file(
 
 
 @optional_brackets
-def option_output_file(required: bool = True):
+def option_output_file(
+    required: bool = True,  # noqa: FBT001, FBT002
+) -> Callable[[T], T]:
     """Get parameter options for output file.
 
     Sample use: --output-file "output.json"
     """
-    return click.option(
+    return option(
         "--output-file",
         metavar="string",
         required=required,
         help="name of file to write to",
-        type=click.File("w"),
+        type=File("w"),
     )

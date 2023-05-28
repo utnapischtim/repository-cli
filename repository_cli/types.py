@@ -13,11 +13,11 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Color:
-    """This class is for the output color management."""
+    """The class is for the output color management."""
 
     neutral = "black"
     error = "red"
     warning = "yellow"
     abort = "magenta"
     success = "green"
-    alternate = ["blue", "cyan"]
+    alternate = ("blue", "cyan")

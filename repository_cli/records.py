@@ -8,14 +8,13 @@
 """Management commands for records."""
 
 import json
-import os
 from copy import deepcopy
 from io import SEEK_END, SEEK_SET
+from pathlib import Path
 from typing import TextIO
 
-import click
 import jq
-from click import secho
+from click import STRING, Choice, File, confirm, group, option, secho
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -45,8 +44,8 @@ from .utils import (
 )
 
 
-@click.group("records")
-def group_records():
+@group("records")
+def group_records() -> None:
     """Management commands for records."""
 
 
@@ -54,7 +53,7 @@ def group_records():
 @option_data_model
 @option_record_type
 @with_appcontext
-def count_records(data_model, record_type):
+def count_records(data_model: str, record_type: str) -> None:
     """Count number of record's.
 
     example call:
@@ -74,8 +73,12 @@ def count_records(data_model, record_type):
 @option_record_type
 @with_appcontext
 def list_records(
-    output_file: TextIO, data_model: str, quiet: bool, jq_filter: str, record_type: str
-):
+    output_file: TextIO,
+    data_model: str,
+    quiet: bool,  # noqa: FBT001
+    jq_filter: str,
+    record_type: str,
+) -> None:
     """List record's.
 
     example call:
@@ -127,7 +130,7 @@ def list_records(
 @option_input_file(type_=JSON(), name="records")
 @option_data_model
 @with_appcontext
-def update_records(records: list, data_model):
+def update_records(records: list, data_model: str) -> None:
     """Update records specified in input file.
 
     example call:
@@ -167,7 +170,7 @@ def update_records(records: list, data_model):
 @option_input_file(type_=JSON(), name="records")
 @option_data_model
 @with_appcontext
-def add_metadata_to_records(records: list, data_model):
+def add_metadata_to_records(records: list, data_model: str) -> None:
     """Add metadata to records.
 
     example call:
@@ -201,9 +204,8 @@ def add_metadata_to_records(records: list, data_model):
         if data_model == "marc21":
             new_data = add_metadata_to_marc21_record(deepcopy(old_data), record)
         else:
-            raise RuntimeError(
-                "Only marc21 is implemented for adding metadata to record."
-            )
+            msg = "Only marc21 is implemented for adding metadata to record."
+            raise RuntimeError(msg)
 
         try:
             update_record(service, pid, identity, new_data, old_data)
@@ -220,7 +222,7 @@ def add_metadata_to_records(records: list, data_model):
 @group_records.command("delete")
 @option_pid
 @with_appcontext
-def delete_record(pid: str):
+def delete_record(pid: str) -> None:
     """Delete record.
 
     example call:
@@ -240,7 +242,7 @@ def delete_record(pid: str):
 @group_records.command("delete-draft")
 @option_pid
 @with_appcontext
-def delete_draft(pid: str):
+def delete_draft(pid: str) -> None:
     """Delete draft.
 
     example call:
@@ -263,14 +265,14 @@ def delete_draft(pid: str):
 
 
 @group_records.group("pids")
-def group_pids():
+def group_pids() -> None:
     """Management commands for record pids."""
 
 
 @group_pids.command("list")
 @option_pid
 @with_appcontext
-def list_pids(pid: str):
+def list_pids(pid: str) -> None:
     """List record's pids.
 
     example call:
@@ -297,7 +299,7 @@ def list_pids(pid: str):
 @option_pid
 @option_pid_identifier
 @with_appcontext
-def replace_pid(pid: str, pid_identifier: str):
+def replace_pid(pid: str, pid_identifier: str) -> None:
     """Update pid doi to unmanaged.
 
     example call:
@@ -341,14 +343,14 @@ def replace_pid(pid: str, pid_identifier: str):
 
 
 @group_records.group("identifiers")
-def group_identifiers():
+def group_identifiers() -> None:
     """Management commands for record identifiers."""
 
 
 @group_identifiers.command("list")
 @option_pid
 @with_appcontext
-def list_identifiers(pid: str):
+def list_identifiers(pid: str) -> None:
     """List record's identifiers.
 
     example call:
@@ -375,7 +377,7 @@ def list_identifiers(pid: str):
 @option_identifier
 @option_pid
 @with_appcontext
-def add_identifier(identifier: str, pid: str):
+def add_identifier(identifier: str, pid: str) -> None:
     """Update the specified record's identifiers.
 
     example call:
@@ -423,7 +425,7 @@ def add_identifier(identifier: str, pid: str):
 @option_identifier
 @option_pid
 @with_appcontext
-def replace_identifier(identifier: str, pid: str):
+def replace_identifier(identifier: str, pid: str) -> None:
     """Update the specified record's identifiers.
 
     example call:
@@ -473,29 +475,32 @@ def replace_identifier(identifier: str, pid: str):
 @group_records.command("add-file")
 @option_pid
 @option_data_model
-@option_input_file(type_=click.File("rb"))
-@click.option("--replace-existing", "-f", is_flag=True, default=False)
-@click.option("--enable-files", is_flag=True, default=False)
+@option_input_file(type_=File("rb"))
+@option("--replace-existing", "-f", is_flag=True, default=False)
+@option("--enable-files", is_flag=True, default=False)
 @with_appcontext
-def add_file(pid, input_file, replace_existing, data_model, enable_files):
+def add_file(
+    pid: str,
+    input_file: File,
+    replace_existing: bool,  # noqa: FBT001
+    data_model: str,
+    enable_files: bool,  # noqa: FBT001
+) -> None:
     """Add a new file to a published record."""
     identity = get_identity("system_process", role_name="admin")
     service = get_records_service(data_model=data_model)
 
     try:
-        # pylint: disable=protected-access
-        record = service.read(identity=identity, id_=pid)._record
+        record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
     except PIDDoesNotExistError as error:
-        secho(
-            f"Record with type '{error.pid_type}' and id '{error.pid_value}' does not exist.",
-            fg=Color.error,
-        )
+        msg = f"Record with type '{error.pid_type}' and id '{error.pid_value}' does not exist."  # noqa: E501
+        secho(msg, fg=Color.error)
         return
 
     files = record.files
     bucket = files.bucket
 
-    filename = os.path.basename(input_file.name)
+    filename = Path(input_file.name).name
     obj = None
     try:
         obj = files[filename]
@@ -538,7 +543,7 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
             fg=Color.success,
         )
 
-    if click.confirm("Continue?"):
+    if confirm("Continue?"):
         files.enabled = True  # this allows to also add files to metadata only records
         files.unlock()
         if obj is not None and replace_existing:
@@ -556,17 +561,22 @@ def add_file(pid, input_file, replace_existing, data_model, enable_files):
 @group_records.command("modify-access")
 @option_data_model
 @option_input_file(
-    type_=JSON(), name="record_ids", help_="json array of ids", required=False
+    type_=JSON(),
+    name="record_ids",
+    help_="json array of ids",
+    required=False,
 )
-@click.option("--record-id", type=click.STRING)
-@click.option(
-    "--access-record", default=None, type=click.Choice(["public", "restricted"])
-)
-@click.option(
-    "--access-file", default=None, type=click.Choice(["public", "restricted"])
-)
+@option("--record-id", type=STRING)
+@option("--access-record", default=None, type=Choice(["public", "restricted"]))
+@option("--access-file", default=None, type=Choice(["public", "restricted"]))
 @with_appcontext
-def modify_access(data_model, record_ids, record_id, access_record, access_file):
+def modify_access(
+    data_model: str,
+    record_ids: list,
+    record_id: str,
+    access_record: str,
+    access_file: str,
+) -> None:
     """Modify the access object within the record."""
     identity = get_identity("system_process", role_name="admin")
     service = get_records_service(data_model=data_model)
@@ -590,11 +600,14 @@ def modify_access(data_model, record_ids, record_id, access_record, access_file)
 @group_records.command("publish")
 @option_data_model
 @option_input_file(
-    type_=JSON(), name="record_ids", help_="json array of ids", required=False
+    type_=JSON(),
+    name="record_ids",
+    help_="json array of ids",
+    required=False,
 )
-@click.option("--record-id", type=click.STRING)
+@option("--record-id", type=STRING)
 @with_appcontext
-def publish(data_model, record_ids, record_id):
+def publish(data_model: str, record_ids: list, record_id: str) -> None:
     """Publish all records."""
     identity = get_identity("system_process", role_name="admin")
     service = get_records_service(data_model=data_model)

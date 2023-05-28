@@ -11,7 +11,10 @@ See https://pytest-invenio.readthedocs.io/ for documentation on which test
 fixtures are available.
 """
 
-import os
+from pathlib import Path
+
+from flask import Flask
+from invenio_records_resources.services.records.results import RecordItem
 
 from repository_cli.records import (
     count_records,
@@ -23,7 +26,7 @@ from repository_cli.records import (
 )
 
 
-def test_base_command(app):
+def test_base_command(app: Flask) -> None:
     """Test base command."""
     runner = app.test_cli_runner()
     response = runner.invoke(group_records)
@@ -31,9 +34,9 @@ def test_base_command(app):
 
 
 def test_count_with_entries(
-    app_initialized,
-    create_record,  # pylint: disable=unused-argument
-):
+    app_initialized: Flask,
+    create_record: RecordItem,  # noqa: ARG001
+) -> None:
     """Test count with entries."""
     runner = app_initialized.test_cli_runner()
     response = runner.invoke(count_records)
@@ -41,7 +44,7 @@ def test_count_with_entries(
     assert "0 records" not in response.output
 
 
-def test_list_with_entries(app_initialized, create_record):
+def test_list_with_entries(app_initialized: Flask, create_record: RecordItem) -> None:
     """Test list with entries."""
     runner = app_initialized.test_cli_runner()
     record = create_record
@@ -54,18 +57,18 @@ def test_list_with_entries(app_initialized, create_record):
     assert f"{ title }" in response.output
 
 
-def test_list_output_file(app_initialized):
+def test_list_output_file(app_initialized: Flask) -> None:
     """Test list output file."""
     filename = "out.json"
     runner = app_initialized.test_cli_runner()
     response = runner.invoke(list_records, ["--output-file", filename])
-    os.remove(filename)
+    Path(filename).unlink()
     assert response.exit_code == 0
     assert "0 records" not in response.output
     assert f"records to {filename}" in response.output
 
 
-def test_update(app_initialized):
+def test_update(app_initialized: Flask) -> None:
     """Test update."""
     filename = "out.json"
     runner = app_initialized.test_cli_runner()
@@ -74,27 +77,27 @@ def test_update(app_initialized):
     assert f"records to {filename}" in response.output
 
     response = runner.invoke(update_records, ["--input-file", filename])
-    os.remove(filename)
+    Path(filename).unlink()
     assert response.exit_code == 0
     assert "successfully updated" in response.output
 
 
-def test_update_ill_formatted_file(app_initialized):
+def test_update_ill_formatted_file(app_initialized: Flask) -> None:
     """Test update ill formatted file."""
     filename = "out.json"
-    with open(filename, mode="w", encoding="utf8") as file_pointer:
+    with Path(filename).open(mode="w", encoding="utf8") as file_pointer:
         file_pointer.write("not a valid JSON representation")
 
     runner = app_initialized.test_cli_runner()
     response = runner.invoke(update_records, ["--input-file", filename])
 
-    os.remove(filename)
+    Path(filename).unlink()
 
     assert response.exit_code == 0
     assert "ERROR - Invalid JSON provided." in response.output
 
 
-def test_delete(app_initialized, create_record):
+def test_delete(app_initialized: Flask, create_record: RecordItem) -> None:
     """Test delete."""
     r_id = create_record.id
     runner = app_initialized.test_cli_runner()
@@ -103,7 +106,7 @@ def test_delete(app_initialized, create_record):
     assert f"'{r_id}', soft-deleted" in response.output
 
 
-def test_delete_draft_success(app_initialized, create_draft):
+def test_delete_draft_success(app_initialized: Flask, create_draft: RecordItem) -> None:
     """Test delete draft success."""
     r_id = create_draft.id
     runner = app_initialized.test_cli_runner()
@@ -112,7 +115,10 @@ def test_delete_draft_success(app_initialized, create_draft):
     assert f"'{r_id}', deleted draft" in response.output
 
 
-def test_delete_draft_no_draft(app_initialized, create_record):
+def test_delete_draft_no_draft(
+    app_initialized: Flask,
+    create_record: RecordItem,
+) -> None:
     """Test delete draft no draft."""
     r_id = create_record.id
     runner = app_initialized.test_cli_runner()
@@ -121,7 +127,7 @@ def test_delete_draft_no_draft(app_initialized, create_record):
     assert f"'{r_id}', does not have a draft" in response.output
 
 
-def test_delete_draft_pid_does_not_exist(app_initialized):
+def test_delete_draft_pid_does_not_exist(app_initialized: Flask) -> None:
     """Test delete draft pid does not exist."""
     r_id = "himbeere"
     runner = app_initialized.test_cli_runner()

@@ -7,14 +7,14 @@
 
 """CLI commands for repository-cli."""
 
-import click
+from click import group
 
 from .records import group_records
 from .users import group_users
 
 
-@click.group()
-def utilities():
+@group()
+def utilities() -> None:
     """Utility commands for TU Graz Repository."""
 
 

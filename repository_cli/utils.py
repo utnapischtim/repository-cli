@@ -6,7 +6,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Commonly used utility functions."""
-from typing import Optional, Union
+from contextlib import suppress
 
 from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
@@ -19,6 +19,17 @@ from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
 from invenio_records_resources.services import RecordService
+
+BELOW_CONTROLFIELD = 10
+
+
+class IdentityNotFoundError(Exception):
+    """Identity not found exception."""
+
+    def __init__(self, role: str) -> None:
+        """Construct IdentityNotFound."""
+        msg = f"Role {role} does not exist"
+        super().__init__(msg)
 
 
 def get_identity(permission_name: str = "any_user", role_name: str = None) -> Identity:
@@ -36,13 +47,13 @@ def get_identity(permission_name: str = "any_user", role_name: str = None) -> Id
         if role:
             identity.provides.add(RoleNeed(role_name))
         else:
-            raise Exception(f"Role {role_name} does not exist")
+            raise IdentityNotFoundError(role=role_name)
 
     identity.provides.add(permission)
     return identity
 
 
-def get_draft(service: RecordService, pid: str, identity: Identity) -> Optional[Draft]:
+def get_draft(service: RecordService, pid: str, identity: Identity) -> Draft | None:
     """Get current draft of record.
 
     None will be returned if there is no draft.
@@ -51,17 +62,17 @@ def get_draft(service: RecordService, pid: str, identity: Identity) -> Optional[
     service.read(id_=pid, identity=identity)
 
     draft = None
-    try:
+    with suppress(Exception):
         draft = service.read_draft(id_=pid, identity=identity)
-    except Exception:
-        pass
 
     return draft
 
 
 def get_record_or_draft(
-    service: RecordService, pid: str, identity: Identity
-) -> Union[Draft, Record]:
+    service: RecordService,
+    pid: str,
+    identity: Identity,
+) -> Draft | Record:
     """Get record or draft."""
     try:
         old_data = service.read(id_=pid, identity=identity).data
@@ -69,11 +80,12 @@ def get_record_or_draft(
         try:
             old_data = service.read_draft(id_=pid, identity=identity).data
         except Exception:
-            raise RuntimeError(f"Record ({pid}) does not exists") from exc
+            msg = f"Record ({pid}) does not exists"
+            raise RuntimeError(msg) from exc
     return old_data
 
 
-def get_records_service(data_model="rdm") -> RecordService:
+def get_records_service(data_model: str = "rdm") -> RecordService:
     """Get records service."""
     available_services = {
         "rdm": current_rdm_records.records_service,
@@ -84,7 +96,8 @@ def get_records_service(data_model="rdm") -> RecordService:
 
 
 def get_metadata_model(
-    data_model: str = "rdm", record_type: str = "record"
+    data_model: str = "rdm",
+    record_type: str = "record",
 ) -> db.Model:
     """Get the record model."""
     available_models = {
@@ -112,7 +125,11 @@ def get_metadata_model(
 
 
 def update_record(
-    service: RecordService, pid: str, identity: Identity, new_data: dict, old_data: dict
+    service: RecordService,
+    pid: str,
+    identity: Identity,
+    new_data: dict,
+    old_data: dict,
 ) -> None:
     """Update record with new data.
 
@@ -130,7 +147,7 @@ def update_record(
             service.publish(id_=pid, identity=identity)
     except Exception as error:
         service.update_draft(id_=pid, identity=identity, data=old_data)
-        raise error
+        raise error  # noqa: TRY201
 
 
 def add_metadata_to_marc21_record(metadata: dict, addition: dict) -> dict:
@@ -138,7 +155,7 @@ def add_metadata_to_marc21_record(metadata: dict, addition: dict) -> dict:
     marc21 = Marc21Metadata(json=metadata["metadata"])
 
     for field_number, fields in addition["metadata"]["fields"].items():
-        if int(field_number) < 10:
+        if int(field_number) < BELOW_CONTROLFIELD:
             marc21.emplace_controlfield(field_number, fields)
         else:
             for field in fields:

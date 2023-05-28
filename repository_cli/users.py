@@ -7,20 +7,20 @@
 
 """Management commands for users."""
 
-import click
+from click import group
 from flask.cli import with_appcontext
 from invenio_accounts.models import User
 from tabulate import tabulate
 
 
-@click.group("users")
-def group_users():
+@group("users")
+def group_users() -> None:
     """Management commands for users."""
 
 
 @group_users.command("list")
 @with_appcontext
-def list_users():
+def list_users() -> None:
     """List registered users.
 
     example call:
@@ -33,4 +33,4 @@ def list_users():
 
         users.append([user.id, user.email, active, user.confirmed_at])
 
-    print(tabulate(users, headers=["id", "email", "active", "confirmed"]))
+    print(tabulate(users, headers=["id", "email", "active", "confirmed"]))  # noqa: T201
