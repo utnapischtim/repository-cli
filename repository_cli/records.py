@@ -9,12 +9,11 @@
 
 import json
 from copy import deepcopy
-from io import SEEK_END, SEEK_SET
 from pathlib import Path
 from typing import TextIO
 
 import jq
-from click import STRING, Choice, File, confirm, group, option, secho
+from click import STRING, Choice, File, group, option, secho
 from flask.cli import with_appcontext
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -472,17 +471,70 @@ def replace_identifier(identifier: str, pid: str) -> None:
     secho(f"Identifier for '{pid}' replaced.", fg=Color.success)
 
 
+@group_records.command("replace-file")
+@option_data_model
+@option_pid
+@option_input_file(type_=File("rb"))
+@option("--override-name-match-check", is_flag=True, default=False)
+@with_appcontext
+def replace_file(
+    data_model: str,
+    pid: str,
+    input_file: File,
+    override_name_match_check: bool,  # noqa: FBT001
+) -> None:
+    """Replace the file."""
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
+
+    try:
+        record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
+    except PIDDoesNotExistError as error:
+        msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
+        secho(msg, fg=Color.error)
+        return
+
+    files = record.files
+    filename = Path(input_file.name).name  # Path().name gets the filename only
+    obj = None
+
+    try:
+        obj = files[filename]
+    except KeyError:
+        if override_name_match_check and len(files) == 1:
+            filename = list(files)[0]
+            obj = files[filename]
+        elif len(files) > 1:
+            msg = "There is more than 1 file and no matching found, specify filename."
+            secho(msg, fg=Color.error)
+            return
+        else:
+            secho(
+                "There is only one file but the filename does not match, "
+                "maybe use parameter --override-name-match-check.",
+                fg=Color.error,
+            )
+            return
+
+    files.unlock()
+    files.delete(obj.key)
+    files.create(filename, stream=input_file)
+    files.lock()
+
+    record.commit()
+    db.session.commit()
+    secho("File replaced successfully.", fg=Color.success)
+
+
 @group_records.command("add-file")
 @option_pid
 @option_data_model
 @option_input_file(type_=File("rb"))
-@option("--replace-existing", "-f", is_flag=True, default=False)
 @option("--enable-files", is_flag=True, default=False)
 @with_appcontext
 def add_file(
     pid: str,
     input_file: File,
-    replace_existing: bool,  # noqa: FBT001
     data_model: str,
     enable_files: bool,  # noqa: FBT001
 ) -> None:
@@ -493,26 +545,21 @@ def add_file(
     try:
         record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
     except PIDDoesNotExistError as error:
-        msg = f"Record with type '{error.pid_type}' and id '{error.pid_value}' does not exist."  # noqa: E501
+        msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
         secho(msg, fg=Color.error)
         return
 
     files = record.files
-    bucket = files.bucket
-
     filename = Path(input_file.name).name
-    obj = None
-    try:
-        obj = files[filename]
-    except KeyError:
-        secho("File does not yet exist.", fg=Color.neutral)
 
-    if obj is not None and not replace_existing:
-        secho(
-            f"Use --replace-existing to overwrite existing {filename} file",
-            fg=Color.error,
-        )
-        return
+    if files.enabled:
+        obj = files.get(filename, None)
+        if obj is not None:
+            secho(
+                "File already exists if you want to replace use argument replace-file",
+                fg=Color.neutral,
+            )
+            return
 
     if not files.enabled and not enable_files:
         secho(
@@ -521,41 +568,14 @@ def add_file(
         )
         return
 
-    input_file.seek(SEEK_SET, SEEK_END)
-    size = input_file.tell()
-    input_file.seek(SEEK_SET)
+    files.enabled = True  # this allows to also add files to metadata only records
+    files.unlock()
+    files.create(filename, stream=input_file)
+    files.lock()
 
-    title = record.get("metadata", {}).get("title")
-    messages = {
-        "Will add the following file:": Color.neutral,
-        f"  filename: {filename}\n  bucket: {bucket}\n  size: {size}": Color.success,
-        "to record:": Color.neutral,
-        f"  Title: {title}\n  ID: {record['id']}\n  UUID: {record.id}": Color.success,
-    }
-
-    for message, color in messages.items():
-        secho(message, fg=color)
-
-    if replace_existing and obj is not None:
-        secho("and remove the file:\n", fg=Color.neutral)
-        secho(
-            f"  filename: {obj.key}\n  bucket: {bucket}\n  size: {obj.file.size}",
-            fg=Color.success,
-        )
-
-    if confirm("Continue?"):
-        files.enabled = True  # this allows to also add files to metadata only records
-        files.unlock()
-        if obj is not None and replace_existing:
-            files.delete(obj.key)
-        files.create(filename, stream=input_file)
-        files.lock()
-
-        record.commit()
-        db.session.commit()  # pylint: disable=no-member
-        secho("File added successfully.", fg=Color.success)
-    else:
-        secho("File addition aborted.", fg=Color.abort)
+    record.commit()
+    db.session.commit()
+    secho("File added successfully.", fg=Color.success)
 
 
 @group_records.command("modify-access")
