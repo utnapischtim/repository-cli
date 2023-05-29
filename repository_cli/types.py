@@ -15,7 +15,7 @@ from dataclasses import dataclass
 class Color:
     """The class is for the output color management."""
 
-    neutral = "black"
+    neutral = "white"
     error = "red"
     warning = "yellow"
     abort = "magenta"
