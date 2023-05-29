@@ -6,19 +6,25 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Commonly used utility functions."""
+from __future__ import annotations
+
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
-from invenio_db import db
-from invenio_drafts_resources.records.api import Draft, Record
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
 from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
-from invenio_records_resources.services import RecordService
+
+if TYPE_CHECKING:
+    from invenio_db import db
+    from invenio_drafts_resources.records.api import Draft, Record
+    from invenio_records_resources.services import RecordService
+
 
 BELOW_CONTROLFIELD = 10
 
