@@ -7,6 +7,15 @@
 Changes
 =======
 
+Version v0.7.0 (release 2023-05-30)
+
+- test: fix and pin due flask-babelex
+- records: separate replace-file from add-file
+- fix: black color on black background, bad
+- types: otherwise it is not working with 3.9
+- global: migrate to ruff
+
+
 Version v0.6.0 (release 2023-05-01)
 
 - cli: add command publish
