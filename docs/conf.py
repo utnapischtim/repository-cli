@@ -336,4 +336,10 @@ nitpick_ignore = [
     ("py:class", "invenio_rdm_records.services.services.RDMRecordService"),
     ("py:class", "invenio_records_resources.services.records.service.RecordService"),
     ("py:class", "sqlalchemy.orm.decl_api.Model"),
+    ("py:class", "flask.app.Flask"),
+    ("py:class", "RecordService"),
+    ("py:class", "Identity"),
+    ("py:class", "Draft"),
+    ("py:class", "db.Model"),
+    ("py:class", "Record"),
 ]
