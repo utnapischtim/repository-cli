@@ -482,11 +482,14 @@ def delete_file(data_model: str, pid: str, filename: str) -> None:
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
-    except PIDDoesNotExistError as error:
-        msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
-        secho(msg, fg=Color.error)
-        return
+        record = service.read(identity=identity, id_=pid)._record
+    except PIDDoesNotExistError:
+        try:
+            record = service.read_draft(identity=identity, id_=pid)._record
+        except PIDDoesNotExistError as error:
+            msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
+            secho(msg, fg=Color.error)
+            return
 
     files = record.files
     obj = None
@@ -526,11 +529,14 @@ def replace_file(
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
-    except PIDDoesNotExistError as error:
-        msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
-        secho(msg, fg=Color.error)
-        return
+        record = service.read(identity=identity, id_=pid)._record
+    except PIDDoesNotExistError:
+        try:
+            record = service.read_draft(identity=identity, id_=pid)._record
+        except PIDDoesNotExistError as error:
+            msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
+            secho(msg, fg=Color.error)
+            return
 
     files = record.files
     filename = Path(input_file.name).name  # Path().name gets the filename only
@@ -581,11 +587,14 @@ def add_file(
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
-    except PIDDoesNotExistError as error:
-        msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
-        secho(msg, fg=Color.error)
-        return
+        record = service.read(identity=identity, id_=pid)._record
+    except PIDDoesNotExistError:
+        try:
+            record = service.read_draft(identity=identity, id_=pid)._record
+        except PIDDoesNotExistError as error:
+            msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
+            secho(msg, fg=Color.error)
+            return
 
     files = record.files
     filename = Path(input_file.name).name
