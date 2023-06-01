@@ -471,6 +471,44 @@ def replace_identifier(identifier: str, pid: str) -> None:
     secho(f"Identifier for '{pid}' replaced.", fg=Color.success)
 
 
+@group_records.command("delete-file")
+@option_data_model
+@option_pid
+@option("--filename", type=STRING, required=True)
+@with_appcontext
+def delete_file(data_model: str, pid: str, filename: str) -> None:
+    """Delete the file."""
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
+
+    try:
+        record = service.read(identity=identity, id_=pid)._record  # noqa: SLF001
+    except PIDDoesNotExistError as error:
+        msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
+        secho(msg, fg=Color.error)
+        return
+
+    files = record.files
+    obj = None
+
+    try:
+        obj = files[filename]
+    except KeyError:
+        secho(
+            f"File with filename: {filename} not found. Check filename or PID",
+            fg=Color.error,
+        )
+        return
+
+    files.unlock()
+    files.delete(obj.key)
+    files.lock()
+
+    record.commit()
+    db.session.commit()
+    secho("File deleted successfully", fg=Color.success)
+
+
 @group_records.command("replace-file")
 @option_data_model
 @option_pid
