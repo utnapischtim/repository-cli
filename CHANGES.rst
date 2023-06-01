@@ -7,6 +7,12 @@
 Changes
 =======
 
+Version v0.8.0 (release 2023-06-01)
+
+- records: make arguments ready for drafts too
+- records: add argument delete-file
+
+
 Version v0.7.0 (release 2023-05-30)
 
 - test: fix and pin due flask-babelex
