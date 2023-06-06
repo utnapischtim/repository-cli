@@ -69,8 +69,12 @@ def test_replace_pid_wrong_identifier_type(
         replace_pid,
         ["--pid", r_id, "--pid-identifier", "this is not a dict"],
     )
+
+    expected_error_msg = (
+        "ERROR - Invalid JSON provided. Check file path or json string."
+    )
     assert response.exit_code == 0
-    assert "pid_identifier is not valid JSON" in response.output
+    assert expected_error_msg in response.output
 
 
 def test_replace_pid_record_not_found(

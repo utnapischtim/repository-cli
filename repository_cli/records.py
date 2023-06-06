@@ -303,16 +303,9 @@ def replace_pid(pid: str, pid_identifier: str) -> None:
 
     example call:
         invenio repository records pids replace -p "fcze8-4vx33"
-        --pid-identifier ' { "doi": {
-        "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged" }}'
+        --pid-identifier '{"doi": {
+        "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}}'
     """
-    try:
-        pid_identifier_json = json.loads(pid_identifier)
-    except Exception as error:
-        secho(str(error), fg=Color.error)
-        secho("pid_identifier is not valid JSON", fg=Color.error)
-        return
-
     service = get_records_service()
     identity = get_identity(permission_name="system_process", role_name="admin")
 
@@ -323,13 +316,13 @@ def replace_pid(pid: str, pid_identifier: str) -> None:
     old_data = service.read(id_=pid, identity=identity).data.copy()
     new_data = old_data.copy()
     pids = new_data.get("pids", {})
-    pid_key = list(pid_identifier_json.keys())[0]
+    pid_key = list(pid_identifier.keys())[0]
 
     if pids.get(pid_key, None) is None:
         secho(f"'{pid}' does not have pid identifier '{pid_key}'", fg=Color.warning)
         return
 
-    pids[pid_key] = pid_identifier_json.get(pid_key)
+    pids[pid_key] = pid_identifier.get(pid_key)
     new_data["pids"] = pids
 
     try:
@@ -383,13 +376,6 @@ def add_identifier(identifier: str, pid: str) -> None:
         invenio repository records identifiers add -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
-    try:
-        identifier_json = json.loads(identifier)
-    except Exception as error:
-        secho(str(error), fg=Color.error)
-        secho("identifier is not valid JSON", fg=Color.error)
-        return
-
     service = get_records_service()
     identity = get_identity("system_process", role_name="admin")
 
@@ -400,14 +386,14 @@ def add_identifier(identifier: str, pid: str) -> None:
     record_data = service.read(id_=pid, identity=identity).data.copy()
 
     current_identifiers = record_data["metadata"].get("identifiers", [])
-    current_schemes = [_["scheme"] for _ in current_identifiers]
-    scheme = identifier_json["scheme"]
+    current_schemes = [ci["scheme"] for ci in current_identifiers]
+    scheme = identifier["scheme"]
     if scheme in current_schemes:
         secho(f"scheme '{scheme}' already in identifiers", fg=Color.error)
         return
 
     old_data = record_data.copy()
-    current_identifiers.append(identifier_json)
+    current_identifiers.append(identifier)
     record_data["metadata"]["identifiers"] = current_identifiers
 
     try:
@@ -431,13 +417,6 @@ def replace_identifier(identifier: str, pid: str) -> None:
         invenio repository records identifiers replace -p "fcze8-4vx33"
         -i '{ "identifier": "10.48436/fcze8-4vx33", "scheme": "doi"}'
     """
-    try:
-        identifier_json = json.loads(identifier)
-    except Exception as error:
-        secho(str(error), fg=Color.error)
-        secho("identifier is not valid JSON", fg=Color.error)
-        return
-
     service = get_records_service()
     identity = get_identity("system_process", role_name="admin")
 
@@ -447,11 +426,11 @@ def replace_identifier(identifier: str, pid: str) -> None:
 
     record_data = service.read(id_=pid, identity=identity).data.copy()
     current_identifiers = record_data["metadata"].get("identifiers", [])
-    scheme = identifier_json["scheme"]
+    scheme = identifier["scheme"]
     replaced = False
     for index, current_identifier in enumerate(current_identifiers):
         if current_identifier["scheme"] == scheme:
-            current_identifiers[index] = identifier_json
+            current_identifiers[index] = identifier
             replaced = True
             break
 

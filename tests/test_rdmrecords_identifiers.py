@@ -87,8 +87,13 @@ def test_add_identifier_wrong_identifier_type(
         add_identifier,
         ["--pid", r_id, "--identifier", "this is not a dict"],
     )
+
+    expected_error_msg = (
+        "ERROR - Invalid JSON provided. Check file path or json string."
+    )
+
     assert response.exit_code == 0
-    assert "identifier is not valid JSON" in response.output
+    assert expected_error_msg in response.output
 
 
 def test_add_identifiers_record_not_found(
@@ -135,6 +140,24 @@ def test_replace_identifier_scheme_does_not_exist(
     assert f"scheme '{identifier['scheme']}' not in identifiers" in response.output
 
 
+def test_replace_identifier_schema_missing(
+    app_initialized: Flask,
+    create_record: RecordItem,
+) -> None:
+    """Test replace identifier scheme missing."""
+    runner = app_initialized.test_cli_runner()
+    r_id = create_record.id
+    response = runner.invoke(
+        replace_identifier,
+        ["--pid", r_id, "--identifier", '{"identifier": "10.48436/fcze8-4vx33"}'],
+    )
+    expected_error_msg = (
+        "The given json does not validate, key: 'scheme' does not exists"
+    )
+    assert response.exit_code == 0
+    assert expected_error_msg in response.output
+
+
 def test_replace_identifier_wrong_identifier_type(
     app_initialized: Flask,
     create_record: RecordItem,
@@ -146,8 +169,12 @@ def test_replace_identifier_wrong_identifier_type(
         replace_identifier,
         ["--pid", r_id, "--identifier", "this is not a dict"],
     )
+    expected_error_msg = (
+        "ERROR - Invalid JSON provided. Check file path or json string."
+    )
+
     assert response.exit_code == 0
-    assert "identifier is not valid JSON" in response.output
+    assert expected_error_msg in response.output
 
 
 def test_replace_identifiers_record_not_found(

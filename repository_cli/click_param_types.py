@@ -9,7 +9,7 @@
 
 
 import sys
-from json import JSONDecodeError, load
+from json import JSONDecodeError, load, loads
 from pathlib import Path
 from typing import Any, Optional
 
@@ -18,10 +18,22 @@ from click import Context, Parameter, ParamType, secho
 from .types import Color
 
 
+def _error_msg(art: str, key: str) -> str:
+    """Construct error message."""
+    error_msgs = {
+        "validate": f"The given json does not validate, key: '{key}' does not exists",
+    }
+    return error_msgs[art]
+
+
 class JSON(ParamType):
     """JSON provides the ability to load a json from a string or a file."""
 
     name = "JSON"
+
+    def __init__(self, validate: list[str] = None) -> None:
+        """Construct Json ParamType."""
+        self.validate = validate
 
     def convert(
         self,
@@ -30,16 +42,22 @@ class JSON(ParamType):
         ctx: Optional["Context"],  # noqa: ARG002
     ) -> Any:  # noqa: ANN401
         """The method converts the json-file to the dictionary representation."""
-        if not Path(value).is_file():
-            secho("ERROR - please look up if the file path is correct.", fg=Color.error)
-            sys.exit()
-
         try:
-            with Path(value).open("r", encoding="utf8") as file_pointer:
-                obj = load(file_pointer)
+            if Path(value).is_file():
+                with Path(value).open("r", encoding="utf8") as file_pointer:
+                    obj = load(file_pointer)
+            else:
+                obj = loads(value)
         except JSONDecodeError as error:
-            secho("ERROR - Invalid JSON provided.", fg=Color.error)
+            msg = "ERROR - Invalid JSON provided. Check file path or json string."
+            secho(msg, fg=Color.error)
             secho(f"  error: {error.args[0]}", fg=Color.error)
             sys.exit()
-        else:
-            return obj
+
+        if self.validate:
+            for key in self.validate:
+                if key not in obj:
+                    secho(_error_msg("validate", key), fg=Color.error)
+                    sys.exit()
+
+        return obj

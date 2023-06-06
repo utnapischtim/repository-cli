@@ -13,6 +13,8 @@ from typing import Any, TypeVar
 
 from click import BOOL, STRING, Choice, File, option
 
+from .click_param_types import JSON
+
 T = TypeVar("T")
 
 
@@ -82,6 +84,7 @@ def option_identifier(
         "--identifier",
         "-i",
         required=required,
+        type=JSON(validate=["identifier", "scheme"]),
         help="metadata identifier as JSON",
     )
 
@@ -99,6 +102,7 @@ def option_pid_identifier(
     return option(
         "--pid-identifier",
         required=required,
+        type=JSON(),
         help="pid identifier as JSON",
     )
 
