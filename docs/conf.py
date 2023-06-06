@@ -342,4 +342,5 @@ nitpick_ignore = [
     ("py:class", "Draft"),
     ("py:class", "db.Model"),
     ("py:class", "Record"),
+    ("py:class", "RecordItem"),
 ]

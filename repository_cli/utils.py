@@ -19,12 +19,13 @@ from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetada
 from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
+from sqlalchemy.orm.exc import NoResultFound
 
 if TYPE_CHECKING:
     from invenio_db import db
     from invenio_drafts_resources.records.api import Draft, Record
     from invenio_records_resources.services import RecordService
-
+    from invenio_records_resources.services.records.results import RecordItem
 
 BELOW_CONTROLFIELD = 10
 
@@ -74,21 +75,31 @@ def get_draft(service: RecordService, pid: str, identity: Identity) -> Draft | N
     return draft
 
 
+def get_record_item(service: RecordService, pid: str, identity: Identity) -> RecordItem:
+    """Get record item."""
+    try:
+        record_item = service.read(id_=pid, identity=identity)
+    except NoResultFound:
+        try:
+            record_item = service.read_draft(id_=pid, identity=identity)
+        except NoResultFound as exc:
+            msg = f"Record ({pid}) does not exists"
+            raise RuntimeError(msg) from exc
+    return record_item
+
+
+def get_data(service: RecordService, pid: str, identity: Identity) -> dict:
+    """Get data."""
+    return get_record_item(service, pid, identity).data
+
+
 def get_record_or_draft(
     service: RecordService,
     pid: str,
     identity: Identity,
 ) -> Draft | Record:
     """Get record or draft."""
-    try:
-        old_data = service.read(id_=pid, identity=identity).data
-    except Exception as exc:
-        try:
-            old_data = service.read_draft(id_=pid, identity=identity).data
-        except Exception:
-            msg = f"Record ({pid}) does not exists"
-            raise RuntimeError(msg) from exc
-    return old_data
+    return get_record_item(service, pid, identity)._record
 
 
 def get_records_service(data_model: str = "rdm") -> RecordService:

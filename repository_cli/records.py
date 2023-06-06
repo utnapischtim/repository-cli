@@ -16,7 +16,6 @@ import jq
 from click import STRING, Choice, File, group, option, secho
 from flask.cli import with_appcontext
 from invenio_db import db
-from invenio_pidstore.errors import PIDDoesNotExistError
 
 from .click_options import (
     option_data_model,
@@ -34,6 +33,7 @@ from .types import Color
 from .utils import (
     add_metadata_to_marc21_record,
     exists_record,
+    get_data,
     get_draft,
     get_identity,
     get_metadata_model,
@@ -195,7 +195,7 @@ def add_metadata_to_records(records: list, data_model: str) -> None:
         secho(f"\n'{pid}', trying to update", fg=Color.warning)
 
         try:
-            old_data = get_record_or_draft(service, pid, identity)
+            old_data = get_data(service, pid, identity)
         except RuntimeError as error:
             secho(str(error), fg=Color.error)
             continue
@@ -482,14 +482,10 @@ def delete_file(data_model: str, pid: str, filename: str) -> None:
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=pid)._record
-    except PIDDoesNotExistError:
-        try:
-            record = service.read_draft(identity=identity, id_=pid)._record
-        except PIDDoesNotExistError as error:
-            msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
-            secho(msg, fg=Color.error)
-            return
+        record = get_record_or_draft(service, pid, identity)
+    except RuntimeError as error:
+        secho(error.msg, fg=Color.error)
+        return
 
     files = record.files
     obj = None
@@ -529,14 +525,10 @@ def replace_file(
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=pid)._record
-    except PIDDoesNotExistError:
-        try:
-            record = service.read_draft(identity=identity, id_=pid)._record
-        except PIDDoesNotExistError as error:
-            msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
-            secho(msg, fg=Color.error)
-            return
+        record = get_record_or_draft(service, pid, identity)
+    except RuntimeError as error:
+        secho(error.msg, fg=Color.error)
+        return
 
     files = record.files
     filename = Path(input_file.name).name  # Path().name gets the filename only
@@ -587,14 +579,10 @@ def add_file(
     service = get_records_service(data_model=data_model)
 
     try:
-        record = service.read(identity=identity, id_=pid)._record
-    except PIDDoesNotExistError:
-        try:
-            record = service.read_draft(identity=identity, id_=pid)._record
-        except PIDDoesNotExistError as error:
-            msg = f"Record id '{error.pid_value} ({data_model})' does not exist."
-            secho(msg, fg=Color.error)
-            return
+        record = get_record_or_draft(service, pid, identity)
+    except RuntimeError as error:
+        secho(error.msg, fg=Color.error)
+        return
 
     files = record.files
     filename = Path(input_file.name).name
