@@ -154,7 +154,7 @@ def update_records(records: list, data_model: str) -> None:
             secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
             continue
 
-        old_data = service.read(id_=pid, identity=identity).data
+        old_data = get_data(service, pid, identity)
 
         try:
             update_record(service, pid, identity, record, old_data)

@@ -7,6 +7,12 @@
 Changes
 =======
 
+Version v0.8.1 (release 2023-06-07)
+
+- refactor: move json validation into JSON
+- refactor: get_record_or_draft
+
+
 Version v0.8.0 (release 2023-06-01)
 
 - records: make arguments ready for drafts too
