@@ -39,7 +39,10 @@ class IdentityNotFoundError(Exception):
         super().__init__(msg)
 
 
-def get_identity(permission_name: str = "any_user", role_name: str = None) -> Identity:
+def get_identity(
+    permission_name: str = "any_user",
+    role_name: str | None = None,
+) -> Identity:
     """Get an identity to perform tasks.
 
     Default permission is "any_user"
@@ -68,11 +71,8 @@ def get_draft(service: RecordService, pid: str, identity: Identity) -> Draft | N
     # check if record exists
     service.read(id_=pid, identity=identity)
 
-    draft = None
     with suppress(Exception):
-        draft = service.read_draft(id_=pid, identity=identity)
-
-    return draft
+        return service.read_draft(id_=pid, identity=identity)
 
 
 def get_record_item(service: RecordService, pid: str, identity: Identity) -> RecordItem:

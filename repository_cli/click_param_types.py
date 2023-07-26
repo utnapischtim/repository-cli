@@ -31,7 +31,7 @@ class JSON(ParamType):
 
     name = "JSON"
 
-    def __init__(self, validate: list[str] = None) -> None:
+    def __init__(self, validate: list[str] | None = None) -> None:
         """Construct Json ParamType."""
         self.validate = validate
 
