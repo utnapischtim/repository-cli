@@ -16,6 +16,8 @@ from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
+from invenio_records_lom import current_records_lom
+from invenio_records_lom.records.models import LOMDraftMetadata, LOMRecordMetadata
 from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
@@ -107,6 +109,7 @@ def get_records_service(data_model: str = "rdm") -> RecordService:
     available_services = {
         "rdm": current_rdm_records.records_service,
         "marc21": current_records_marc21.records_service,
+        "lom": current_records_lom.records_service,
     }
 
     return available_services.get(data_model, current_rdm_records.records_service)
@@ -121,10 +124,12 @@ def get_metadata_model(
         "record": {
             "rdm": RDMRecordMetadata,
             "marc21": Marc21RecordMetadata,
+            "lom": LOMRecordMetadata,
         },
         "draft": {
             "rdm": RDMDraftMetadata,
             "marc21": Marc21DraftMetadata,
+            "lom": LOMDraftMetadata,
         },
     }
 

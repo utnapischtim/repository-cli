@@ -57,7 +57,7 @@ def option_data_model() -> Callable[[T], T]:
     """Get parameter option for data model."""
     return option(
         "--data-model",
-        type=Choice(["rdm", "marc21"]),
+        type=Choice(["rdm", "marc21", "lom"]),
         default="rdm",
     )
 
