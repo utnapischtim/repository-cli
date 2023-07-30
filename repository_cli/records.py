@@ -240,14 +240,15 @@ def delete_record(pid: str) -> None:
 
 @group_records.command("delete-draft")
 @option_pid
+@option_data_model
 @with_appcontext
-def delete_draft(pid: str) -> None:
+def delete_draft(pid: str, data_model: str) -> None:
     """Delete draft.
 
     example call:
         invenio repository records delete-draft -p "fcze8-4vx33"
     """
-    service = get_records_service()
+    service = get_records_service(data_model)
     identity = get_identity(permission_name="system_process", role_name="admin")
 
     if not exists_record(service, pid, identity):
@@ -270,14 +271,15 @@ def group_pids() -> None:
 
 @group_pids.command("list")
 @option_pid
+@option_data_model
 @with_appcontext
-def list_pids(pid: str) -> None:
+def list_pids(pid: str, data_model: str) -> None:
     """List record's pids.
 
     example call:
         invenio repository records pids list -p <pid>
     """
-    service = get_records_service()
+    service = get_records_service(data_model)
     identity = get_identity()
 
     if not exists_record(service, pid, identity):
@@ -297,8 +299,9 @@ def list_pids(pid: str) -> None:
 @group_pids.command("replace")
 @option_pid
 @option_pid_identifier
+@option_data_model
 @with_appcontext
-def replace_pid(pid: str, pid_identifier: str) -> None:
+def replace_pid(pid: str, pid_identifier: str, data_model: str) -> None:
     """Update pid doi to unmanaged.
 
     example call:
@@ -306,7 +309,7 @@ def replace_pid(pid: str, pid_identifier: str) -> None:
         --pid-identifier '{"doi": {
         "identifier": "10.48436/fcze8-4vx33", "provider": "unmanaged"}}'
     """
-    service = get_records_service()
+    service = get_records_service(data_model)
     identity = get_identity(permission_name="system_process", role_name="admin")
 
     if not exists_record(service, pid, identity):
