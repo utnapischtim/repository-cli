@@ -7,11 +7,12 @@
 
 """Commonly used param types for CLI commands."""
 
+from __future__ import annotations
 
 import sys
 from json import JSONDecodeError, load, loads
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from click import Context, Parameter, ParamType, secho
 
@@ -38,8 +39,8 @@ class JSON(ParamType):
     def convert(
         self,
         value: Any,  # noqa: ANN401
-        param: Optional["Parameter"],  # noqa: ARG002
-        ctx: Optional["Context"],  # noqa: ARG002
+        param: Parameter | None,  # noqa: ARG002
+        ctx: Context | None,  # noqa: ARG002
     ) -> Any:  # noqa: ANN401
         """The method converts the json-file to the dictionary representation."""
         try:
