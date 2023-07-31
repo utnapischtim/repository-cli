@@ -7,6 +7,14 @@
 Changes
 =======
 
+Version v0.9.0 (release 2023-07-31)
+
+- records: add data_model parameter
+- typing: use new optional syntax
+- service: add lom service
+- global: update ruff
+
+
 Version v0.8.1 (release 2023-06-07)
 
 - refactor: move json validation into JSON
