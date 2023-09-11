@@ -251,10 +251,6 @@ def delete_draft(pid: str, data_model: str) -> None:
     service = get_records_service(data_model)
     identity = get_identity(permission_name="system_process", role_name="admin")
 
-    if not exists_record(service, pid, identity):
-        secho(f"'{pid}', does not exist or is deleted", fg=Color.error)
-        return
-
     draft = get_draft(service=service, pid=pid, identity=identity)
     if draft is None:
         secho(f"'{pid}', does not have a draft", fg=Color.warning)
