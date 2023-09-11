@@ -70,11 +70,7 @@ def get_draft(service: RecordService, pid: str, identity: Identity) -> Draft | N
 
     None will be returned if there is no draft.
     """
-    # check if record exists
-    service.read(id_=pid, identity=identity)
-
-    with suppress(Exception):
-        return service.read_draft(id_=pid, identity=identity)
+    return service.read_draft(id_=pid, identity=identity)
 
 
 def get_record_item(service: RecordService, pid: str, identity: Identity) -> RecordItem:
