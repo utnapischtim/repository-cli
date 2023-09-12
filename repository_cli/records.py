@@ -31,6 +31,7 @@ from .click_options import (
     option_record_type,
 )
 from .click_param_types import JSON
+from .generate_commands import create_metadata_cli
 from .types import Color
 from .utils import (
     add_metadata_to_marc21_record,
@@ -47,6 +48,9 @@ from .utils import (
 @group("records")
 def group_records() -> None:
     """Management commands for records."""
+
+
+group_records.add_command(create_metadata_cli("lom"))
 
 
 @group_records.command("count")

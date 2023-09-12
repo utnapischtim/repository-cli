@@ -18,6 +18,7 @@ from invenio_rdm_records.proxies import current_rdm_records
 from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
 from invenio_records_lom import current_records_lom
 from invenio_records_lom.records.models import LOMDraftMetadata, LOMRecordMetadata
+from invenio_records_lom.utils.metadata import LOMMetadata
 from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
@@ -130,7 +131,19 @@ def get_metadata_model(
     try:
         return type_[data_model]
     except KeyError as exc:
-        msg = "the used data_model should be of the list [rdm, marc21]"
+        msg = "the used data_model should be of the list [rdm, marc21, lom]"
+        raise RuntimeError(msg) from exc
+
+
+def get_metadata_class(data_model: str):
+    """Get the metadata class."""
+    available_metadata_classes = {
+        "lom": LOMMetadata,
+    }
+    try:
+        return available_metadata_classes[data_model]
+    except KeyError as exc:
+        msg = f"the used data_model should be in [{', '.join(available_metadata_classes)}]"
         raise RuntimeError(msg) from exc
 
 

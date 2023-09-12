@@ -32,3 +32,6 @@ Utility functions
 
 .. automodule:: repository_cli.utils
    :members:
+
+.. automodule:: repository_cli.generate_commands
+   :members:
