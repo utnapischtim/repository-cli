@@ -65,14 +65,6 @@ def get_identity(
     return identity
 
 
-def get_draft(service: RecordService, pid: str, identity: Identity) -> Draft | None:
-    """Get current draft of record.
-
-    None will be returned if there is no draft.
-    """
-    return service.read_draft(id_=pid, identity=identity)
-
-
 def get_record_item(service: RecordService, pid: str, identity: Identity) -> RecordItem:
     """Get record item."""
     try:

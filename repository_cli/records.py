@@ -16,6 +16,8 @@ import jq
 from click import STRING, Choice, File, group, option, secho
 from flask.cli import with_appcontext
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
+from sqlalchemy.orm.exc import NoResultFound
 
 from .click_options import (
     option_data_model,
@@ -34,7 +36,6 @@ from .utils import (
     add_metadata_to_marc21_record,
     exists_record,
     get_data,
-    get_draft,
     get_identity,
     get_metadata_model,
     get_record_or_draft,
@@ -251,12 +252,15 @@ def delete_draft(pid: str, data_model: str) -> None:
     service = get_records_service(data_model)
     identity = get_identity(permission_name="system_process", role_name="admin")
 
-    draft = get_draft(service=service, pid=pid, identity=identity)
-    if draft is None:
-        secho(f"'{pid}', does not have a draft", fg=Color.warning)
+    try:
+        service.delete_draft(id_=pid, identity=identity)
+    except NoResultFound:
+        secho(f"'{pid}' does not have a draft", fg=Color.warning)
+        return
+    except PIDDoesNotExistError:
+        secho(f"'{pid}' does not exists", fg=Color.warning)
         return
 
-    service.delete_draft(id_=pid, identity=identity)
     secho(f"'{pid}', deleted draft", fg=Color.success)
 
 

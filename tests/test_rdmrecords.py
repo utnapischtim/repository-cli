@@ -124,7 +124,7 @@ def test_delete_draft_no_draft(
     runner = app_initialized.test_cli_runner()
     response = runner.invoke(delete_draft, ["--pid", r_id])
     assert response.exit_code == 0
-    assert f"'{r_id}', does not have a draft" in response.output
+    assert f"'{r_id}' does not have a draft" in response.output
 
 
 def test_delete_draft_pid_does_not_exist(app_initialized: Flask) -> None:
@@ -133,4 +133,4 @@ def test_delete_draft_pid_does_not_exist(app_initialized: Flask) -> None:
     runner = app_initialized.test_cli_runner()
     response = runner.invoke(delete_draft, ["--pid", r_id])
     assert response.exit_code == 0
-    assert f"'{r_id}', does not exist" in response.output
+    assert f"'{r_id}' does not exist" in response.output
