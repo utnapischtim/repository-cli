@@ -7,6 +7,17 @@
 Changes
 =======
 
+Version v0.10.0 (release 2023-09-12)
+
+- add way to generate commands that update JSON
+- refactor: delete-draft
+- test: improve run-tests.sh
+- setup: use pytest-black-ng instead of pytest-black
+- fix: logic error
+- fix: can't return draft without existing record
+- fix: cli delete-draft
+
+
 Version v0.9.0 (release 2023-07-31)
 
 - records: add data_model parameter
