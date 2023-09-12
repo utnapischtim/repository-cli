@@ -130,13 +130,13 @@ def get_metadata_model(
     }
 
     try:
-        _type = available_models.get(record_type)
+        type_ = available_models[record_type]
     except KeyError as exc:
         msg = "the used record_type should be of the list [record, draft]"
         raise RuntimeError(msg) from exc
 
     try:
-        return _type.get(data_model)
+        return type_[data_model]
     except KeyError as exc:
         msg = "the used data_model should be of the list [rdm, marc21]"
         raise RuntimeError(msg) from exc
