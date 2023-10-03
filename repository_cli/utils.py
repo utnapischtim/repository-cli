@@ -8,12 +8,11 @@
 """Commonly used utility functions."""
 from __future__ import annotations
 
-from contextlib import suppress
-from typing import TYPE_CHECKING
-
 from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
+from invenio_db import db
+from invenio_drafts_resources.records.api import Draft, Record
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
 from invenio_records_lom import current_records_lom
@@ -22,13 +21,9 @@ from invenio_records_lom.utils.metadata import LOMMetadata
 from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
+from invenio_records_resources.services import RecordService
+from invenio_records_resources.services.records.results import RecordItem
 from sqlalchemy.orm.exc import NoResultFound
-
-if TYPE_CHECKING:
-    from invenio_db import db
-    from invenio_drafts_resources.records.api import Draft, Record
-    from invenio_records_resources.services import RecordService
-    from invenio_records_resources.services.records.results import RecordItem
 
 BELOW_CONTROLFIELD = 10
 
@@ -135,7 +130,7 @@ def get_metadata_model(
         raise RuntimeError(msg) from exc
 
 
-def get_metadata_class(data_model: str):
+def get_metadata_class(data_model: str) -> object:
     """Get the metadata class."""
     available_metadata_classes = {
         "lom": LOMMetadata,
@@ -143,7 +138,8 @@ def get_metadata_class(data_model: str):
     try:
         return available_metadata_classes[data_model]
     except KeyError as exc:
-        msg = f"the used data_model should be in [{', '.join(available_metadata_classes)}]"
+        classes = ", ".join(available_metadata_classes)
+        msg = f"the used data_model should be in [{classes}]"
         raise RuntimeError(msg) from exc
 
 

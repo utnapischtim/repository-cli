@@ -5,12 +5,15 @@
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""Build database update commands from `metadata_class`\\ es."""
+"""Build database update commands from `metadata_class` es."""
+
+from __future__ import annotations
+
 from functools import wraps
 from inspect import Parameter, signature
-from typing import Callable, _UnionGenericAlias
+from typing import Callable, TypeVar, _UnionGenericAlias
 
-from click import command, group, option, secho
+from click import Command, Group, command, group, option, secho
 from flask.cli import with_appcontext
 
 from .click_options import option_pid
@@ -25,9 +28,10 @@ from .utils import (
 )
 
 EMPTY = Parameter.empty  # special emptiness value distinguishable from `None`
+T = TypeVar("T")
 
 
-def is_union_type(type_):
+def is_union_type(type_: T) -> bool:
     """Check whether `type_` is a `typing.Union` of sorts."""
     return isinstance(type_, _UnionGenericAlias)
 
@@ -47,9 +51,9 @@ def build_method_options(method: Callable) -> list:
             option_kwargs["show_default"] = True
         else:
             option_kwargs["required"] = True
-        if param_info.annotation is not EMPTY and not is_union_type(
-            param_info.annotation
-        ):
+
+        annotation = param_info.annotation
+        if annotation is not EMPTY and not is_union_type(annotation):
             # click coerces to `type`, which is ambiguous for `typing.Union` types
             # (e.g. which of the classes `A`, `B` should `Union[A, B]` coerce to?)
             # hence such annotations can't be used...
@@ -59,22 +63,20 @@ def build_method_options(method: Callable) -> list:
 
     # option corresponding to `self`-param is guaranteed to be first, remove it
     # `inspect` handles this the same way (https://github.com/python/cpython/blob/3.11/Lib/inspect.py#L2053)
-    options = options[1:]
-    return options
+    return options[1:]
 
 
-def build_update_func(metadata_class, method_name: Callable):
+def build_update_func(metadata_class: Callable, method_name: Callable) -> Callable:
     """Build a JSON-updating function using `metadata_class` internally.
 
     :param metadata_class: class for updating JSON,
                            will be initialized with to-be-updated JSON
     :param Callable method_name: name of method of `metadata_class` to use for updating
     """
-
     method = getattr(metadata_class, method_name)
 
     @wraps(method)
-    def update_func(json, **method_kwargs):
+    def update_func(json: dict, **method_kwargs: dict) -> dict:
         metadata = metadata_class(json, overwritable=True)
         method(metadata, **method_kwargs)
         return metadata.json
@@ -82,7 +84,11 @@ def build_update_func(metadata_class, method_name: Callable):
     return update_func
 
 
-def build_command(data_model: str, update_func: Callable, update_options):
+def build_command(
+    data_model: str,
+    update_func: Callable,
+    update_options: list[Callable],
+) -> Command:
     """Build a `click` command that updates JSON in the database.
 
     :param str model_name: SQL-table to be updated, e.g. `"lom"`
@@ -94,7 +100,7 @@ def build_command(data_model: str, update_func: Callable, update_options):
     @option_pid()
     @with_appcontext
     @wraps(update_func)
-    def command_func(pid, **update_kwargs):
+    def command_func(pid: str, **update_kwargs: dict) -> None:
         service = get_records_service(data_model)
         identity = get_identity(permission_name="system_process", role_name="admin")
 
@@ -108,15 +114,16 @@ def build_command(data_model: str, update_func: Callable, update_options):
 
         secho(f'JSON for pid "{pid}" succesfully updated.', fg=Color.success)
 
-    # `option`s are decorators, which are usually applied via `@my_option` syntax
-    # but that's just syntactic sugar for calling `cmd=my_option(cmd)` after `def cmd(...):`
+    # `option`s are decorators, which are usually applied via `@my_option`
+    # syntax but that's just syntactic sugar for calling `cmd=my_option(cmd)`
+    # after `def cmd(...):`
     for update_option in update_options:
         command_func = update_option(command_func)
 
     return command(command_func)
 
 
-def create_metadata_cli(data_model):
+def create_metadata_cli(data_model: str) -> Group:
     """Returns a `click` group with subcommands for `data_model`.
 
     One subcommand will be generated for every method of the corresponding
@@ -127,22 +134,22 @@ def create_metadata_cli(data_model):
     .. code-block:: python
 
         class MyModelMetadata:
+            # must not mutate passed-in json!
             def __init__(self, json, overwritable=False):
-                # must not mutate passed-in json!
                 ...
 
+            # will have a CLI-command generated from it since name starts with "append_"
+            # created command will have required arguments `--kwarg-1` and `--kwarg-2`
             def append_some_field(self, kwarg_1, kwarg_2):
-                # will have a CLI-command generated from it since name starts with "append_"
-                # created command will have required arguments `--kwarg-1` and `--kwarg-2`
                 ...
 
+            # will have a CLI-command generated from it since name starts with "set_"
+            # created command will have optional argument --kwarg-3, which defaults to 0
             def set_some_other_field(self, kwarg_3=0):
-                # will have a CLI-command generated from it since name starts with "set_"
-                # created command will have optional argument --kwarg-3, which defaults to 0
                 ...
 
+            # NO command generated since name neither starts with "append_" nor "set_"
             def utility_func(self, ...):
-                # NO command generated since name neither starts with "append_" nor "set_"
                 ...
     """
 
@@ -150,7 +157,7 @@ def create_metadata_cli(data_model):
         data_model,
         help=f"Commands computer-generated from {data_model}'s metadata class.",
     )
-    def created_group():
+    def created_group() -> None:
         """Group for commands computer-generated for this data model."""
 
     metadata_class = get_metadata_class(data_model)
