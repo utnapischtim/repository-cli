@@ -659,3 +659,79 @@ def publish(data_model: str, record_ids: list, record_id: str) -> None:
     for rec_id in record_ids:
         record = service.publish(id_=rec_id, identity=identity)
         secho(f"record ({record.id}) published", fg=Color.success)
+
+
+@group_pids.command("add")
+@option_pid
+@option_pid_identifier
+@option_data_model
+@with_appcontext
+def add_pid_to_record(pid: str, pid_identifier: str, data_model: str):
+    """Add new persistent identifier to record.
+
+    example call:
+        invenio repository records pids add -p "asdfg-hjk42"
+        --data-model "lom"
+        --pid-identifier '{"my_pid": {"identifier": "foo", "provider": "my_provider"}}'
+
+    in order to add a pid, the service needs to be configured to handle it
+    corresponding config-vars are `<model>_PERSISTENT_IDENTIFIER_PROVIDERS` and
+    `<model>_PERSISTENT_IDENTIFIERS`, where <model> is one of `LOM`, `RDM`, or `MARC21`
+    """
+    service = get_records_service(data_model)
+    identity = get_identity(permission_name="system_process", role_name="admin")
+
+    if not exists_record(service, pid, identity):
+        secho(f"'{pid}' does not exist or was deleted", fg=Color.error)
+        return
+
+    # try to destructure passed-in `pid-identfier`
+    try:
+        pid_type = next(iter(pid_identifier.keys()))  # e.g. 'doi', 'oai', 'moodle'
+        pid_provider = pid_identifier[pid_type]["provider"]
+        pid_identifier_str = pid_identifier[pid_type]["identifier"]
+    except Exception as exc:
+        secho(f"'{pid}'received ill-formed `pid-identifier`", fg=Color.error)
+        secho(
+            '`make sure it is of form {"foo": {"identifier": "bar", "provider": "baz"}}',
+            fg=Color.error,
+        )
+        secho(f"further info: {repr(exc)}", fg=Color.error)
+        return
+
+    # check for presence of required configuration
+    # providers-config is of form {'doi': {'default': 'datacite', 'datacite': DataCiteProvider}}
+    providers_config = service.config.pids_providers
+    if pid_type not in providers_config:
+        secho(f"no configuration for pids for given type '{pid_type}'", fg=Color.error)
+        return
+    if pid_provider not in providers_config[pid_type]:
+        secho(
+            f"no configuration for provider '{pid_provider}' of pid-type '{pid_type}'",
+            fg=Color.error,
+        )
+        return
+
+    # only allow adding, no overwriting
+    old_data = get_data(service=service, pid=pid, identity=identity)
+    if pid_type in old_data.get("pids", {}):
+        secho(
+            f"'{pid}', pid-identifier of pid-type '{pid_type}' was already added",
+            fg=Color.error,
+        )
+        return
+
+    # update record in database
+    new_data = deepcopy(old_data)
+    new_data.setdefault("pids", {})
+    new_data["pids"][pid_type] = {
+        "identifier": pid_identifier_str,
+        "provider": pid_provider,
+    }
+    try:
+        update_record(service, pid, identity, new_data, old_data)
+    except Exception as exc:
+        secho(f"'{pid}', problem during update, {repr(exc)}", fg=Color.error)
+        return
+
+    secho(f"'{pid}', successfully updated", fg=Color.success)
