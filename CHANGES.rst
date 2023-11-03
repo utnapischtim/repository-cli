@@ -7,6 +7,11 @@
 Changes
 =======
 
+Version v0.11.0 (release 2023-11-03)
+
+- add command for adding persistent identifiers
+
+
 Version v0.10.0 (release 2023-09-12)
 
 - add way to generate commands that update JSON
