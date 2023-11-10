@@ -7,6 +7,12 @@
 Changes
 =======
 
+Version v0.11.1 (release 2023-11-10)
+
+- cli: tmp fix, this should be revisited
+- setup: increase rdm version
+
+
 Version v0.11.0 (release 2023-11-03)
 
 - add command for adding persistent identifiers
