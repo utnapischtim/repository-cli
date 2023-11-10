@@ -53,7 +53,10 @@ def build_method_options(method: Callable) -> list:
             # click coerces to `type`, which is ambiguous for `typing.Union` types
             # (e.g. which of the classes `A`, `B` should `Union[A, B]` coerce to?)
             # hence such annotations can't be used...
-            option_kwargs["type"] = param_info.annotation
+            # type_ = param_info.annotation
+            # option_kwargs["type"] = str if type_ == "str" else type_
+            # TODO
+            option_kwargs["type"] = str
 
         options.append(option(f"--{param_name.replace('_', '-')}", **option_kwargs))
 
