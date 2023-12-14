@@ -178,7 +178,7 @@ def add_metadata_to_records(records: list, data_model: str) -> None:
     """Add metadata to records.
 
     example call:
-        invenio repository records update --input-file in.json [--data-model marc21]
+        invenio repository records add-metadata --input-file in.json [--data-model marc21]
 
     Description:
       file should look like:
