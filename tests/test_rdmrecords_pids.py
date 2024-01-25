@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2023 Graz University of Technology.
+# Copyright (C) 2021-2024 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -26,7 +26,7 @@ def test_list_pids_with_entries(
     """Test list pids with entries."""
     runner = app_initialized.test_cli_runner()
     r_id = create_record.id
-    response = runner.invoke(list_pids, ["--pid", r_id])
+    response = runner.invoke(list_pids, ["--data-model", "rdm", "--pid", r_id])
     assert response.exit_code == 0
 
 
@@ -34,7 +34,7 @@ def test_list_pids_record_not_found(app_initialized: Flask) -> None:
     """Test list pids record not found."""
     runner = app_initialized.test_cli_runner()
     r_id = "this does not exist"
-    response = runner.invoke(list_pids, ["--pid", r_id])
+    response = runner.invoke(list_pids, ["--data-model", "rdm", "--pid", r_id])
     assert response.exit_code == 0
     assert "does not exist or is deleted" in response.output
 
@@ -52,7 +52,14 @@ def test_replace_pid_pid_does_not_exist(
     )
     response = runner.invoke(
         replace_pid,
-        ["--pid", r_id, "--pid-identifier", json.dumps(pid_identifier)],
+        [
+            "--data-model",
+            "rdm",
+            "--pid",
+            r_id,
+            "--pid-identifier",
+            json.dumps(pid_identifier),
+        ],
     )
     assert response.exit_code == 0
     assert "does not have pid identifier" in response.output
@@ -67,7 +74,14 @@ def test_replace_pid_wrong_identifier_type(
     r_id = create_record.id
     response = runner.invoke(
         replace_pid,
-        ["--pid", r_id, "--pid-identifier", "this is not a dict"],
+        [
+            "--data-model",
+            "rdm",
+            "--pid",
+            r_id,
+            "--pid-identifier",
+            "this is not a dict",
+        ],
     )
 
     expected_error_msg = (
@@ -86,7 +100,14 @@ def test_replace_pid_record_not_found(
     r_id = "this does not exist"
     response = runner.invoke(
         replace_pid,
-        ["--pid", r_id, "--pid-identifier", json.dumps(pid_identifier)],
+        [
+            "--data-model",
+            "rdm",
+            "--pid",
+            r_id,
+            "--pid-identifier",
+            json.dumps(pid_identifier),
+        ],
     )
     assert response.exit_code == 0
     assert "does not exist or is deleted" in response.output
