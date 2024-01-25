@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2023 Graz University of Technology.
+# Copyright (C) 2021-2024 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -40,7 +40,9 @@ from .utils import (
     get_identity,
     get_metadata_model,
     get_record_or_draft,
+    get_records_api,
     get_records_service,
+    get_register_or_update_pid_task,
     update_record,
 )
 
@@ -339,6 +341,32 @@ def replace_pid(pid: str, pid_identifier: str, data_model: str) -> None:
         return
 
     secho(f"'{pid}', successfully updated", fg=Color.success)
+
+
+@group_pids.command()
+@option_data_model
+@option("--scheme", type=STRING, required=True, default="doi")
+@option_pid(required=False)
+@with_appcontext
+def update_remote_pid(data_model: str, scheme: str, pid: str = None) -> None:
+    """Update remote url.
+
+    example call:
+       invenio repository pids update-remote-pid --data-model marc21 --schema doi
+       invenio repository pids update-remote-pid --data-model marc21 --schema doi --pid custo-mpid0
+    """
+
+    api = get_records_api(data_model)
+    register_or_update_pid = get_register_or_update_pid_task(data_model)
+
+    if pid:
+        pids = [pid]
+    else:
+        records = api.model_cls.query.all()
+        pids = [rec.data["id"] for rec in records]
+
+    for pid in pids:
+        register_or_update_pid.delay(pid, scheme)
 
 
 @group_records.group("identifiers")

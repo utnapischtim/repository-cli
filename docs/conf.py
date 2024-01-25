@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2023 Graz University of Technology.
+# Copyright (C) 2021-2024 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -331,6 +331,7 @@ autoclass_content = "both"
 # see https://www.sphinx-doc.org/en/master/usage/configuration.html?highlight=nitpick#confval-nitpick_ignore
 nitpick_ignore = [
     ("py:class", "flask_principal.Identity"),
+    ("py:class", "invenio_records_resources.records.api.Record"),
     ("py:class", "invenio_drafts_resources.records.api.Draft"),
     ("py:class", "invenio_drafts_resources.records.api.Record"),
     ("py:class", "invenio_rdm_records.services.services.RDMRecordService"),
@@ -343,4 +344,5 @@ nitpick_ignore = [
     ("py:class", "db.Model"),
     ("py:class", "Record"),
     ("py:class", "RecordItem"),
+    ("py:class", "celery.local.celery.local"),
 ]

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2023 Graz University of Technology.
+# Copyright (C) 2021-2024 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -11,17 +11,31 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
+from celery.local import Proxy as CeleryProxy
 from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
 from invenio_rdm_records.proxies import current_rdm_records
+from invenio_rdm_records.records.api import RDMRecord
 from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
+from invenio_rdm_records.services.pids.tasks import (
+    register_or_update_pid as rdm_register_or_update_pid,
+)
 from invenio_records_lom import current_records_lom
+from invenio_records_lom.records.api import LOMRecord
 from invenio_records_lom.records.models import LOMDraftMetadata, LOMRecordMetadata
+from invenio_records_lom.services.tasks import (
+    register_or_update_pid as lom_register_or_update_pid,
+)
 from invenio_records_lom.utils.metadata import LOMMetadata
 from invenio_records_marc21 import Marc21Metadata, current_records_marc21
 from invenio_records_marc21.records import DraftMetadata as Marc21DraftMetadata
 from invenio_records_marc21.records import RecordMetadata as Marc21RecordMetadata
+from invenio_records_marc21.records.api import Marc21Record
+from invenio_records_marc21.services.pids.tasks import (
+    register_or_update_pid as marc21_register_or_update_pid,
+)
+from invenio_records_resources.records import Record
 from sqlalchemy.orm.exc import NoResultFound
 
 if TYPE_CHECKING:
@@ -102,6 +116,28 @@ def get_records_service(data_model: str = "rdm") -> RecordService:
     }
 
     return available_services.get(data_model, current_rdm_records.records_service)
+
+
+def get_records_api(data_model: str) -> Record:
+    """Get record api."""
+    available_apis = {
+        "rdm": RDMRecord,
+        "marc21": Marc21Record,
+        "lom": LOMRecord,
+    }
+
+    return available_apis.get(data_model)
+
+
+def get_register_or_update_pid_task(data_model: str) -> CeleryProxy:
+    """Get register_or_update_pid task."""
+    available_tasks = {
+        "rdm": rdm_register_or_update_pid,
+        "marc21": marc21_register_or_update_pid,
+        "lom": lom_register_or_update_pid,
+    }
+
+    return available_tasks.get(data_model)
 
 
 def get_metadata_model(
