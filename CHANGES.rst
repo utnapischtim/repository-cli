@@ -7,6 +7,13 @@
 Changes
 =======
 
+Version v0.12.0 (release 2024-01-25)
+
+- pids: add command update-remote-pid
+- options: make the data_model option required
+- fix: copy paste error
+
+
 Version v0.11.1 (release 2023-11-10)
 
 - cli: tmp fix, this should be revisited
