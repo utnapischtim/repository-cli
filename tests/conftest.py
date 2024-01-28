@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2023 Graz University of Technology.
+# Copyright (C) 2021-2024 Graz University of Technology.
 #
 # repository-cli is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -39,12 +39,12 @@ def fixture_app_config(app_config: dict) -> dict:
     app_config["JSONSCHEMAS_HOST"] = "no-use"
     app_config["BABEL_DEFAULT_LOCALE"] = "en"
     app_config["I18N_LANGUAGES"] = [("en", "English"), ("de", "German")]
-    app_config[
-        "RECORDS_REFRESOLVER_CLS"
-    ] = "invenio_records.resolver.InvenioRefResolver"
-    app_config[
-        "RECORDS_REFRESOLVER_STORE"
-    ] = "invenio_jsonschemas.proxies.current_refresolver_store"
+    app_config["RECORDS_REFRESOLVER_CLS"] = (
+        "invenio_records.resolver.InvenioRefResolver"
+    )
+    app_config["RECORDS_REFRESOLVER_STORE"] = (
+        "invenio_jsonschemas.proxies.current_refresolver_store"
+    )
 
     app_config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
