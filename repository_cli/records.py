@@ -638,6 +638,7 @@ def add_file(
 @option("--record-id", type=STRING)
 @option("--access-record", default=None, type=Choice(["public", "restricted"]))
 @option("--access-file", default=None, type=Choice(["public", "restricted"]))
+@option("--embargo-until", default=None, type=STRING)
 @with_appcontext
 def modify_access(
     data_model: str,
@@ -645,6 +646,7 @@ def modify_access(
     record_id: str,
     access_record: str,
     access_file: str,
+    embargo_until: str,
 ) -> None:
     """Modify the access object within the record."""
     identity = get_identity("system_process", role_name="admin")
@@ -660,6 +662,9 @@ def modify_access(
             data["access"]["record"] = access_record
         if access_file:
             data["access"]["files"] = access_file
+        if embargo_until:
+            data["access"]["embargo"]["until"] = embargo_until
+            data["access"]["embargo"]["active"] = True
 
         service.edit(id_=rec_id, identity=identity)
         service.update_draft(id_=rec_id, identity=identity, data=data)
