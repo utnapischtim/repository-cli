@@ -352,8 +352,8 @@ def update_remote_pid(data_model: str, scheme: str, pid: str = None) -> None:
     """Update remote url.
 
     example call:
-       invenio repository pids update-remote-pid --data-model marc21 --schema doi
-       invenio repository pids update-remote-pid --data-model marc21 --schema doi --pid custo-mpid0
+       invenio repository records pids update-remote-pid --data-model marc21 --schema doi
+       invenio repository records pids update-remote-pid --data-model marc21 --schema doi --pid custo-mpid0
     """
 
     api = get_records_api(data_model)
