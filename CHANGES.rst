@@ -7,6 +7,14 @@
 Changes
 =======
 
+Version v0.12.1 (release 2024-02-19)
+
+- fix: example command for update-remote-pid
+- records: add set embargo until
+- setup: add python3.11 support
+- black: fix formating v24.1.1
+
+
 Version v0.12.0 (release 2024-01-25)
 
 - pids: add command update-remote-pid
