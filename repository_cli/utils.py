@@ -15,6 +15,7 @@ from celery.local import Proxy as CeleryProxy
 from flask_principal import Identity, RoleNeed
 from invenio_access.permissions import any_user, system_process
 from invenio_accounts import current_accounts
+from invenio_pidstore.errors import PIDUnregistered
 from invenio_rdm_records.proxies import current_rdm_records
 from invenio_rdm_records.records.api import RDMRecord
 from invenio_rdm_records.records.models import RDMDraftMetadata, RDMRecordMetadata
@@ -84,7 +85,7 @@ def get_record_item(service: RecordService, pid: str, identity: Identity) -> Rec
     """Get record item."""
     try:
         record_item = service.read(id_=pid, identity=identity)
-    except NoResultFound:
+    except (NoResultFound, PIDUnregistered):
         try:
             record_item = service.read_draft(id_=pid, identity=identity)
         except NoResultFound as exc:
