@@ -694,6 +694,68 @@ def publish(data_model: str, record_ids: list, record_id: str) -> None:
         secho(f"record ({record.id}) published", fg=Color.success)
 
 
+@group_records.command("single-ip")
+@option_data_model
+@option_input_file(
+    type_=JSON(),
+    name="record_ids",
+    help_="json array of ids",
+    required=False,
+)
+@option("--record-id", type=STRING)
+@with_appcontext
+def single_ip(record_ids: list, record_id: str, data_model: str) -> None:
+    """Set single ip to record."""
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
+
+    if not record_ids and record_id:
+        record_ids = [record_id]
+
+    for rec_id in record_ids:
+        try:
+            data = get_data(service, rec_id, identity)
+        except RuntimeError as error:
+            secho(error.msg, fg=Color.error)
+        else:
+            data["custom_fields"]["single_ip"] = True
+
+            service.edit(id_=rec_id, identity=identity)
+            service.update_draft(id_=rec_id, identity=identity, data=data)
+            service.publish(id_=rec_id, identity=identity)
+
+
+@group_records.command("ip-network")
+@option_data_model
+@option_input_file(
+    type_=JSON(),
+    name="record_ids",
+    help_="json array of ids",
+    required=False,
+)
+@option("--record-id", type=STRING)
+@with_appcontext
+def ip_network(record_ids: list, record_id: str, data_model: str) -> None:
+    """Set single ip to record."""
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
+
+    if not record_ids and record_id:
+        record_ids = [record_id]
+
+    for rec_id in record_ids:
+        try:
+            data = get_data(service, rec_id, identity)
+        except RuntimeError as error:
+            secho(error.msg, fg=Color.error)
+        else:
+            data["custom_fields"]["ip_network"] = True
+
+            service.edit(id_=rec_id, identity=identity)
+            service.update_draft(id_=rec_id, identity=identity, data=data)
+            service.publish(id_=rec_id, identity=identity)
+
+
 @group_pids.command("add")
 @option_pid
 @option_pid_identifier
