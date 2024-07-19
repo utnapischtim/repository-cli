@@ -42,5 +42,5 @@ fi
 
 python -m check_manifest
 python -m sphinx.cmd.build -qnNW docs docs/_build/html
-eval "$(docker-services-cli up --db ${DB:-postgresql} --search ${SEARCH:-opensearch} --cache ${CACHE:-redis} --env)"
+eval "$(docker-services-cli up --search ${SEARCH:-opensearch} --cache ${CACHE:-redis} --env)"
 python -m pytest ${pytest_args[@]+"${pytest_args[@]}"}
