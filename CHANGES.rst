@@ -7,6 +7,13 @@
 Changes
 =======
 
+Version v0.12.2 (release 2024-07-19)
+
+- setup: move to support python3.12 only
+- cli: add two commands
+- fix: not catched exception
+
+
 Version v0.12.1 (release 2024-02-19)
 
 - fix: example command for update-remote-pid
