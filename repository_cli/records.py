@@ -830,3 +830,17 @@ def add_pid_to_record(pid: str, pid_identifier: str, data_model: str):
         return
 
     secho(f"'{pid}', successfully updated", fg=Color.success)
+
+
+@group_records.group("communities")
+def group_communities() -> None:
+    """Management commands for record communities."""
+
+
+@group_communities.command("add")
+@option_data_model
+@option("--record-id", type=STRING)
+@option("--community-id", type=STRING)
+def communities_add(data_model: str, record_id, community_id):
+    """Add record to community."""
+    # see invenio_rdm_records/services/communities/service.py:bulk_add
