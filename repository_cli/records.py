@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import TextIO
 
 import jq
-from click import STRING, Choice, File, group, option, secho
+from click import BOOL, STRING, Choice, File, group, option, secho
 from flask.cli import with_appcontext
+from invenio_communities.proxies import current_communities
 from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from sqlalchemy.orm.exc import NoResultFound
@@ -841,6 +842,47 @@ def group_communities() -> None:
 @option_data_model
 @option("--record-id", type=STRING)
 @option("--community-id", type=STRING)
-def communities_add(data_model: str, record_id, community_id):
+@option("--set-default", type=BOOL, default=False)
+@with_appcontext
+def communities_add(data_model: str, record_id, community_id, set_default):
     """Add record to community."""
     # see invenio_rdm_records/services/communities/service.py:bulk_add
+    identity = get_identity("system_process", role_name="admin")
+    service = get_records_service(data_model=data_model)
+
+    try:
+        record = get_record_or_draft(service, record_id, identity)
+    except RuntimeError as error:
+        secho(error.msg, fg=Color.error)
+        return
+
+    community = current_communities.service.record_cls.pid.resolve(community_id)
+    print(f"communities_add community: {community}, record: {record}")
+
+    if community.id in record.parent.communities:
+        secho("already included", fg="red")
+        return
+
+    set_default = set_default or not record.parent.communities
+    parent_community = getattr(community, "parent", None)
+    already_in_parent = (
+        parent_community and str(parent_community.id) in record.parent.communities
+    )
+
+    if parent_community and not already_in_parent:
+        record.parent.communities.add(parent_community, request=None)
+
+    record.parent.communities.add(community, request=None, default=set_default)
+
+    record.parent.commit()
+    record.commit()
+    db.session.commit()
+
+    # Commit and bulk re-index everything
+    # uow.register(
+    #     ParentRecordCommitOp(
+    #         record.parent,
+    #         indexer_context={"service": current_rdm_records_service},
+    #     bulk_index=True,
+    #     )
+    # )
